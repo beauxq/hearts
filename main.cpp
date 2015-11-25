@@ -2,12 +2,12 @@
 
 #include <iostream>
 
-#include "Card.h"
+#include "Deck.h"
 
 void test()
 {
     // test
-    std::cout << (HEARTS < CLUBS) << std::endl;
+    Deck deck(true);
 
     // test sfml
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
