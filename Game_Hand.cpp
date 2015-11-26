@@ -92,7 +92,7 @@ void Game_Hand::play_card(const Card& card)
     if (card.beats_in_suit_of(played_cards[trick_leader]))
         trick_leader = whose_turn;
 
-    ++whose_turn;
+    whose_turn = (whose_turn + 1) % PLAYER_COUNT;
 }
 
 void Game_Hand::end_trick()

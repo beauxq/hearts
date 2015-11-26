@@ -8,7 +8,7 @@
 const int Deck::LOW = 2;  // must be > 0 or constructor will break
 const int Deck::HIGH = 14;
 
-Deck::iterator Deck::begin()
+Deck::iterator Deck::begin() const
 {
     iterator itr_to_return(this);
     itr_to_return.current_set = 0;
@@ -18,7 +18,7 @@ Deck::iterator Deck::begin()
     return itr_to_return;
 }
 
-Deck::iterator Deck::end()
+Deck::iterator Deck::end() const
 {
     iterator itr_to_return(this);
     itr_to_return.current_set = SUIT_COUNT - 1;
@@ -31,24 +31,12 @@ Deck::Deck(const bool& create_full /*= false*/)
 {
     card_count = 0;
 
-    int stopping_value;
-    if (! create_full)
-        stopping_value = LOW - 1;
-    else
-    {
-        stopping_value = HIGH;
-    }
+    if (create_full)
+        fill();
     for (int suit = 0; suit < SUIT_COUNT; ++suit)
     {
-        // suit_dividers[suit].first = cards.size();
-        for (int value = LOW; value <= stopping_value; ++value)  // this loop does not run if create_full is false
-        {
-            cards[suit].insert(Card(value, Suit(suit)));
-            ++card_count;
-        }
-        // suit_dividers[suit].second = cards.size();
         sort_order[suit] = Suit(suit);  // default sort order
-    }  // TODO: move stuff to fill()
+    }
 }
 
 void Deck::change_sort(const std::vector<Suit>& suits_in_order)
@@ -73,26 +61,8 @@ void Deck::change_sort(const std::vector<Suit>& suits_in_order)
     if (! all_found)
         throw std::invalid_argument("invalid suit order");
 
-    /*
-    std::vector<Card> new_cards;
-    std::pair<unsigned int, unsigned int> new_suit_dividers[SUIT_COUNT];
-
-    for (auto itr = suits_in_order.begin(); itr != suits_in_order.end(); ++itr)
-    {
-        new_suit_dividers[*itr].first = new_cards.size();
-        for (unsigned int from_index = suit_dividers[*itr].first; from_index < suit_dividers[*itr].second; ++from_index)
-        {
-            new_cards.push_back(cards[from_index]);
-        }
-        new_suit_dividers[*itr].second = new_cards.size();
-    }
-
-    // update all data
-    cards = new_cards;
-    */
     for (int i = 0; i < SUIT_COUNT; ++i)
     {
-        // suit_dividers[i] = new_suit_dividers[i];
         sort_order[i] = suits_in_order[i];
     }
 }
@@ -119,8 +89,70 @@ Card Deck::deal_one()
     return to_return;
 }
 
+std::vector<Card> Deck::pick_random(int n) const
+{
+    // std::cout << "entered pick_random to pick " << n << std::endl;
+    std::vector<Card> to_return;
+
+    iterator deck_itr(this);
+    int choice;
+
+    for (; n > 0; --n)
+    {
+        // std::cout << "enter loop needing " << n << " picks\n";
+        deck_itr = begin();
+        choice = rand() % (card_count - to_return.size());
+        while (choice > 0)
+        {
+            // std::cout << "need to advance deck_itr " << choice << std::endl;
+            ++deck_itr;
+            bool this_might_be_in_vector = true;
+            while (this_might_be_in_vector)
+            {
+                // std::cout << "haven't found it not in vector\n";
+                std::vector<Card>::iterator to_ret_itr;
+                for (to_ret_itr = to_return.begin(); to_ret_itr != to_return.end(); ++to_ret_itr)
+                {
+                    // std::cout << "looking through vector already chosen size " << to_return.size() << std::endl;
+                    if (*to_ret_itr == *deck_itr)
+                    {
+                        ++deck_itr;
+                        break;
+                    }
+                }
+                if (to_ret_itr == to_return.end())  // got through the vector without finding it
+                    this_might_be_in_vector = false;
+            }
+            --choice;
+        }
+
+        to_return.push_back(*deck_itr);
+    }
+
+    return to_return;
+}
+
 void Deck::insert(const Card& card)
 {
     if (cards[card.get_suit()].insert(card).second)  // second is bool whether inserted
         ++card_count;
+}
+
+void Deck::clear()
+{
+    for (int i = 0; i < SUIT_COUNT; ++i)
+        cards[i].clear();
+    card_count = 0;
+}
+
+void Deck::fill()
+{
+    for (int suit = 0; suit < SUIT_COUNT; ++suit)
+    {
+        for (int value = LOW; value <= HIGH; ++value)
+        {
+            if (cards[suit].insert(Card(value, Suit(suit))).second)  // sets might be not empty
+                ++card_count;
+        }
+    }
 }

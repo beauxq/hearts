@@ -11,9 +11,8 @@ const Card STARTING_CARD(2, CLUBS);
 
 class Game_Hand
 {
-public:  // for test
-    std::vector<Deck> hands;
 private:
+    std::vector<Deck> hands;
     std::vector<Deck> unknown_cards_for_player;  // for AI
     bool player_is_human[PLAYER_COUNT];
 
@@ -33,6 +32,10 @@ private:
 public:
     Game_Hand();
 
+    const int& get_whose_turn() const { return whose_turn; }
+    const std::vector<Deck>& get_hands() const { return hands; }
+
+    // each hand, user interface calls these in this order
     void reset_hand();
     void deal_hands();
     void pass(const int& from_player, const int& to_player, const std::vector<Card>& passed_cards);
