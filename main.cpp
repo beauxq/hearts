@@ -9,6 +9,9 @@ void test()
     // test
     Deck deck(true);
 
+    std::vector<Suit> new_sort = {HEARTS, DIAMONDS, SPADES, CLUBS};
+    deck.change_sort(new_sort);
+
     // test sfml
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
     sf::CircleShape shape(100.f);
