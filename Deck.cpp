@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <iostream>  // for test
+#include <cstdlib>
 
 // whether ace is high is defined here (1-13 or 2-14)
 const int Deck::LOW = 2;  // must be > 0 or constructor will break
@@ -105,7 +106,7 @@ void Deck::pop(const Card& card_to_remove)
 Card Deck::deal_one()
 {
     auto deck_itr = begin();
-    int choice = rand() % card_count;
+    int choice = rand() % card_count;  // used as the iterating variable to advance iterator
     while (choice > 0)
     {
         ++deck_itr;
@@ -116,4 +117,10 @@ Card Deck::deal_one()
     pop(to_return);
 
     return to_return;
+}
+
+void Deck::insert(const Card& card)
+{
+    if (cards[card.get_suit()].insert(card).second)  // second is bool whether inserted
+        ++card_count;
 }

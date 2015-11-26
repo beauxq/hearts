@@ -55,6 +55,8 @@ public:
 
     /** random */
     Card deal_one();
+
+    void insert(const Card& card);
 };
 
 #endif // DECK_H_INCLUDED

@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <iostream>
+#include <cstdlib>
 
 #include "Deck.h"
 
@@ -27,6 +28,14 @@ void test()
         std::cout << itr->get_value() << ' ' << itr->get_suit() << std::endl;
     }
 
+    // test Deck::insert
+    deck.insert(pick);
+    //show deck again
+    std::cout << "after insert\n";
+    for (auto itr = deck.begin(); itr != deck.end(); ++itr)
+    {
+        std::cout << itr->get_value() << ' ' << itr->get_suit() << std::endl;
+    }
 
     // test sfml
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
@@ -50,6 +59,8 @@ void test()
 
 int main()
 {
+    srand(time(NULL));
+
     test();
 
     return 0;
