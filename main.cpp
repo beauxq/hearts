@@ -12,6 +12,22 @@ void test()
     std::vector<Suit> new_sort = {HEARTS, DIAMONDS, SPADES, CLUBS};
     deck.change_sort(new_sort);
 
+    // test iteration through deck
+    for (auto itr = deck.begin(); itr != deck.end(); ++itr)
+    {
+        std::cout << itr->get_value() << ' ' << itr->get_suit() << std::endl;
+    }
+
+    Card pick = deck.deal_one();
+
+    std::cout << "dealt card: " << pick.get_value() << ' ' << pick.get_suit() << std::endl;
+    // rest of deck
+    for (auto itr = deck.begin(); itr != deck.end(); ++itr)
+    {
+        std::cout << itr->get_value() << ' ' << itr->get_suit() << std::endl;
+    }
+
+
     // test sfml
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
     sf::CircleShape shape(100.f);

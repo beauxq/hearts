@@ -20,15 +20,21 @@ public:
     class iterator
     {
     private:
+        friend class Deck;
+
         Deck* parent;
         int current_set;
-        std::set<Card>::iterator real_iterator;
+        std::set<Card>::iterator inside_iterator;
 
         void check_between_sets();
     public:
-        iterator() {}
-        Card& operator* ();
-        Card* operator-> ();
+        iterator(Deck* parent_) : parent(parent_) {}
+        const Card& operator* ();
+        const Card* operator-> ();
+        iterator& operator++ ();  // prefix increment
+
+        bool operator== (const iterator& rhs) { return inside_iterator == rhs.inside_iterator; }
+        bool operator!= (const iterator& rhs) { return ! operator== (rhs); }
     };
 
     friend class iterator;

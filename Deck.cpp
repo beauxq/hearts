@@ -7,31 +7,23 @@
 const int Deck::LOW = 2;  // must be > 0 or constructor will break
 const int Deck::HIGH = 14;
 
-void Deck::iterator::check_between_sets()
-{
-    while (current_set != sort_order[SUIT_COUNT-1] && real_iterator == cards[sort_order[current_set]].end())
-    {
-        ++current_set;
-        real_iterator = cards[sort_order[current_set]].begin();
-    }
-}
-
-Card& Deck::iterator::operator* ()
-{
-    return *real_iterator;
-}
-
-Card* Deck::iterator::operator-> ()
-{
-    return real_iterator;
-}
-
 Deck::iterator Deck::begin()
 {
-    iterator itr_to_return;
+    iterator itr_to_return(this);
     itr_to_return.current_set = 0;
-    itr_to_return.real_iterator = cards[sort_order[current_set]].begin();
+    itr_to_return.inside_iterator = cards[sort_order[itr_to_return.current_set]].begin();
     itr_to_return.check_between_sets();
+
+    return itr_to_return;
+}
+
+Deck::iterator Deck::end()
+{
+    iterator itr_to_return(this);
+    itr_to_return.current_set = SUIT_COUNT - 1;
+    itr_to_return.inside_iterator = cards[sort_order[itr_to_return.current_set]].end();
+
+    return itr_to_return;
 }
 
 Deck::Deck(const bool& create_full /*= false*/)
@@ -106,11 +98,22 @@ void Deck::change_sort(const std::vector<Suit>& suits_in_order)
 
 void Deck::pop(const Card& card_to_remove)
 {
-    if (cards[card_to_remove.get_suit()].erase(card_to_remove))
+    if (cards[card_to_remove.get_suit()].erase(card_to_remove))  // TODO: does this remove the right card (after order change)?
         --card_count;
 }
 
 Card Deck::deal_one()
 {
+    auto deck_itr = begin();
+    int choice = rand() % card_count;
+    while (choice > 0)
+    {
+        ++deck_itr;
+        --choice;
+    }
 
+    Card to_return = *deck_itr;
+    pop(to_return);
+
+    return to_return;
 }
