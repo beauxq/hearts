@@ -48,7 +48,7 @@ Deck::Deck(const bool& create_full /*= false*/)
         }
         // suit_dividers[suit].second = cards.size();
         sort_order[suit] = Suit(suit);  // default sort order
-    }
+    }  // TODO: move stuff to fill()
 }
 
 void Deck::change_sort(const std::vector<Suit>& suits_in_order)
@@ -97,7 +97,7 @@ void Deck::change_sort(const std::vector<Suit>& suits_in_order)
     }
 }
 
-void Deck::pop(const Card& card_to_remove)
+void Deck::erase(const Card& card_to_remove)
 {
     if (cards[card_to_remove.get_suit()].erase(card_to_remove))  // TODO: does this remove the right card (after order change)?
         --card_count;
@@ -114,7 +114,7 @@ Card Deck::deal_one()
     }
 
     Card to_return = *deck_itr;
-    pop(to_return);
+    erase(to_return);
 
     return to_return;
 }

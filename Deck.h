@@ -51,12 +51,16 @@ public:
         @throws std::invalid_argument if all suits are not given */
     void change_sort(const std::vector<Suit>& suits_in_order);
 
-    void pop(const Card& card_to_remove);
+    void erase(const Card& card_to_remove);
 
     /** random */
     Card deal_one();
 
     void insert(const Card& card);
+
+    bool is_empty() const { return card_count == 0; }
+
+    void clear();  // TODO: implement
 };
 
 #endif // DECK_H_INCLUDED

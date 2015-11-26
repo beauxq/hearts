@@ -3,9 +3,16 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "Deck.h"
+#include "Deck.h"  // test
+#include "Game.h"
 
 void test()
+{
+    Game a;
+    a.play_test();
+}
+
+void test_some_inside_stuff()
 {
     // test
     Deck deck(true);

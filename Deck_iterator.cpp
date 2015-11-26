@@ -30,4 +30,5 @@ Deck::iterator& Deck::iterator::operator++ ()
 {
     ++inside_iterator;
     check_between_sets();
+    return *this;
 }
