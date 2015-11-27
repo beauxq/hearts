@@ -100,7 +100,7 @@ Card Text_UI::choose_card(const std::vector<Card>& hand_vector) const
         card_choice = hand_vector.at(strtol(choice.c_str(), nullptr, 10) - 1);  // stoi not working with my compiler
         // card_choice = hand_vector.at(std::stoi(choice) - 1);
     }
-    catch (std::exception e)
+    catch (...)
     {
         card_choice = Card();  // 0 value
     }
@@ -144,6 +144,7 @@ Card Text_UI::input_play_choice(const Deck& hand) const
     for (auto itr = hand.begin(); itr != hand.end(); ++itr)
         hand_vector.push_back(*itr);
 
+    std::cout << "card to play? ";
     while (! to_return.get_value())
         to_return = choose_card(hand_vector);
 
