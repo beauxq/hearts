@@ -74,6 +74,7 @@ void Game_Hand::receive_passed_cards()
         for (auto itr = passed_cards_to_player[i].begin(); itr != passed_cards_to_player[i].end(); ++itr)
         {
             hands[i].insert(*itr);
+            // TODO: remove from unknown cards
 
             if (*itr == STARTING_CARD)
                 whose_turn = i;
@@ -89,6 +90,8 @@ void Game_Hand::reset_trick()
 
 void Game_Hand::play_card(const Card& card)
 {
+    // TODO: remove from unknown cards of all players
+
     hands[whose_turn].erase(card);
     played_cards[whose_turn] = card;
     ++played_card_count;
@@ -109,6 +112,8 @@ void Game_Hand::end_trick()
         scores[trick_leader] += points_for(*card_itr);
     }
     whose_turn = trick_leader;
+
+    // TODO: history of tricks?
 }
 
 void Game_Hand::end_hand()

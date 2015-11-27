@@ -26,6 +26,7 @@ public:
 
     void change_passing() { passing_index = (passing_index + 1) % PLAYER_COUNT; }
 
+    // getters
     const std::vector<int>& get_winners() const { return winners; }
     int get_score(const int& player) const { return total_scores[player]; }
     int get_passing_direction() const { return passing_directions[passing_index]; }
