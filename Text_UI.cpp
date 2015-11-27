@@ -7,12 +7,20 @@
 #include <cstdlib>  // strtol (stoi isn't working on my compiler)
 #include <algorithm>  // find
 
-void Text_UI::show_scores() const
+void Text_UI::show_game_scores() const
 {
-    std::cout << "  Scores:  " << game.hand.get_score(0) << "  "
-                               << game.hand.get_score(1) << "  "
-                               << game.hand.get_score(2) << "  "
-                               << game.hand.get_score(3) << std::endl;
+    std::cout << "  Game Scores:  " << game.get_score(0) << "  "
+                                    << game.get_score(1) << "  "
+                                    << game.get_score(2) << "  "
+                                    << game.get_score(3) << std::endl;
+}
+
+void Text_UI::show_hand_scores() const
+{
+    std::cout << "  Hand Scores:  " << game.hand.get_score(0) << "  "
+                                    << game.hand.get_score(1) << "  "
+                                    << game.hand.get_score(2) << "  "
+                                    << game.hand.get_score(3) << std::endl;
 }
 
 void Text_UI::show_hand(const Deck& hand) const
@@ -86,6 +94,8 @@ std::string Text_UI::direction_str(const int& how_many_players_to_the_left) cons
         return "across";
     case 3:
         return "right";
+    default:
+        return "error";
     }
 }
 
@@ -97,10 +107,18 @@ Card Text_UI::choose_card(const std::vector<Card>& hand_vector) const
     std::getline(std::cin, choice);
     try
     {
+        int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
+        if (choice_index >= hand_vector.size() || choice_index < 0)
+            throw 20; //std::out_of_range("out of range");
         card_choice = hand_vector.at(strtol(choice.c_str(), nullptr, 10) - 1);  // stoi not working with my compiler
         // card_choice = hand_vector.at(std::stoi(choice) - 1);
     }
-    catch (...)
+    catch (int e) //std::out_of_range e)
+    {
+        std::cout << "caught";
+        card_choice = Card();  // 0 value
+    }
+    catch (std::invalid_argument e)
     {
         card_choice = Card();  // 0 value
     }
@@ -159,7 +177,7 @@ void Text_UI::play()
         game.hand.reset_hand();
         game.hand.deal_hands();
 
-        show_scores();
+        show_game_scores();
 
         // passing
         if (game.get_passing_direction())
@@ -168,7 +186,7 @@ void Text_UI::play()
             {
                 if (! game.hand.is_human(player_passing))
                 {
-                    std::vector<Card> to_pass = game.hand.get_hands()[game.hand.get_whose_turn()].pick_random(3);
+                    std::vector<Card> to_pass = game.hand.get_hands()[player_passing].pick_random(3);
                     game.hand.pass(player_passing, (player_passing+game.get_passing_direction())%PLAYER_COUNT, to_pass);
                 }
                 else  // is human
@@ -200,14 +218,18 @@ void Text_UI::play()
                 else  // is human
                 {
                     show_hand(game.hand.get_hands()[game.hand.get_whose_turn()]);
-                    game.hand.play_card( input_play_choice(game.hand.get_hands()[game.hand.get_whose_turn()]) );
+                    Card to_play = input_play_choice(game.hand.get_hands()[game.hand.get_whose_turn()]);
+                    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << card_str(to_play) << std::endl;
+                    game.hand.play_card(to_play);
                 }
             }
             game.hand.end_trick();
+            show_hand_scores();
+            std::cout << std::endl;
             game.change_passing();
         }
         game.hand.end_hand();
         game.end_hand();
     }
-    show_scores();
+    show_game_scores();
 }

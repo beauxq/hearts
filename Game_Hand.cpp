@@ -35,6 +35,7 @@ void Game_Hand::reset_hand()
         unknown_cards_for_player[i].fill();
         scores[i] = 0;
         passed_cards_to_player[i].clear();
+        hearts_broken = false;
     }
 }
 
@@ -94,6 +95,9 @@ void Game_Hand::play_card(const Card& card)
 
     if (card.beats_in_suit_of(played_cards[trick_leader]))
         trick_leader = whose_turn;
+
+    if (card.get_suit() == HEARTS)
+        hearts_broken = true;  // TODO: alternate rule, queen of spades breaks hearts
 
     whose_turn = (whose_turn + 1) % PLAYER_COUNT;
 }

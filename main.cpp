@@ -7,6 +7,18 @@
 #include "Game.h"
 #include "Text_UI.h"
 
+void except_test()
+{
+    try
+    {
+        throw 20;
+    }
+    catch (int e)
+    {
+        std::cout << "caught\n";
+    }
+}
+
 void test_text_ui()
 {
     Text_UI game;
@@ -75,7 +87,8 @@ int main()
 {
     srand(time(NULL));
 
-    test_text_ui();
+    // test_text_ui();
+    except_test();
 
     return 0;
 }

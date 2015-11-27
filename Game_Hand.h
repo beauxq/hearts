@@ -27,6 +27,7 @@ private:
     int trick_leader;
 
     int whose_turn;
+    bool hearts_broken;
 
     int points_for(const Card& card);
 
@@ -39,12 +40,13 @@ public:
     const int& get_score(const int& player) const { return scores[player]; }
     const bool& is_human(const int& player) const { return player_is_human[player]; }
     bool turns_left_in_trick() const { return played_card_count < PLAYER_COUNT; }
+    const bool& hearts_is_broken() { return hearts_broken; }
 
     // each hand, user interface calls these in this order
     void reset_hand();
     void deal_hands();
     void pass(const int& from_player, const int& to_player, const std::vector<Card>& passed_cards);
-    void receive_passed_cards();
+    void receive_passed_cards();  // TODO: return which cards (for UI)
     void reset_trick();
     void play_card(const Card& card);
     void end_trick();  // TODO: returns who won the trick? (for UI)

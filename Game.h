@@ -26,8 +26,8 @@ public:
 
     void change_passing() { passing_index = (passing_index + 1) % PLAYER_COUNT; }
 
-    const std::vector<int>& get_winners() const { return winners; };
-
+    const std::vector<int>& get_winners() const { return winners; }
+    int get_score(const int& player) const { return total_scores[player]; }
     int get_passing_direction() const { return passing_directions[passing_index]; }
 
     void play_test()  // test
@@ -37,7 +37,7 @@ public:
         std::cout << "dealt, now passing\n";
         for (int player_passing = 0; player_passing < PLAYER_COUNT; ++player_passing)
         {
-            std::vector<Card> to_pass = hand.get_hands()[hand.get_whose_turn()].pick_random(3);
+            std::vector<Card> to_pass = hand.get_hands()[player_passing].pick_random(3);
             std::cout << "picked random\n";
             hand.pass(player_passing, (player_passing+get_passing_direction())%PLAYER_COUNT, to_pass);
         }

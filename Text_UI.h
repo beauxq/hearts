@@ -13,7 +13,8 @@ class Text_UI
 private:
     Game game;
 
-    void show_scores() const;
+    void show_game_scores() const;
+    void show_hand_scores() const;
     void show_hand(const Deck& hand) const;
 
     std::string card_str(const Card& card) const;
