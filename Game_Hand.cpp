@@ -103,3 +103,8 @@ void Game_Hand::end_trick()
     }
     whose_turn = trick_leader;
 }
+
+void Game_Hand::end_hand()
+{
+    // TODO: shoot the moon points
+}

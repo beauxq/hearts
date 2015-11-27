@@ -34,6 +34,7 @@ public:
 
     const int& get_whose_turn() const { return whose_turn; }
     const std::vector<Deck>& get_hands() const { return hands; }
+    const int& get_score(const int& player) const { return scores[player]; }
 
     // each hand, user interface calls these in this order
     void reset_hand();
@@ -43,6 +44,7 @@ public:
     void reset_trick();
     void play_card(const Card& card);
     void end_trick();
+    void end_hand();  // shoot the moon points
 };
 
 #endif // GAME_HAND_H_INCLUDED

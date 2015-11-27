@@ -6,8 +6,17 @@
 class Game
 {
 private:
-    Game_Hand hand;
+    int total_scores[PLAYER_COUNT];
+
 public:
+    Game_Hand hand;
+
+    Game() {}
+
+    void game_reset();
+
+    void end_hand();
+
     void play_test()  // test
     {
         hand.deal_hands();
@@ -29,6 +38,7 @@ public:
             }
             hand.end_trick();
         }
+        hand.end_hand();
     }
 };
 
