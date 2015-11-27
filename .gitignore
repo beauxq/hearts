@@ -199,3 +199,6 @@ FakesAssemblies/
 *.cbp
 *.layout
 *.depend
+
+# backup files
+*.bak
