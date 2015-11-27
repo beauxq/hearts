@@ -1,5 +1,8 @@
 #include "Game_Hand.h"
 
+#include <set>
+#include <vector>
+
 #include "Deck.h"
 
 int Game_Hand::points_for(const Card& card)

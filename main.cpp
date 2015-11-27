@@ -5,8 +5,15 @@
 
 #include "Deck.h"  // test
 #include "Game.h"
+#include "Text_UI.h"
 
-void test()
+void test_text_ui()
+{
+    Text_UI game;
+    game.play();
+}
+
+void test_game()
 {
     Game a;
     a.play_test();
@@ -68,7 +75,7 @@ int main()
 {
     srand(time(NULL));
 
-    test();
+    test_text_ui();
 
     return 0;
 }

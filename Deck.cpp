@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <iostream>  // for test
 #include <cstdlib>
+#include <algorithm>  // find
 
 // whether ace is high is defined here (1-13 or 2-14)
 const int Deck::LOW = 2;  // must be > 0 or constructor will break
@@ -110,18 +111,11 @@ std::vector<Card> Deck::pick_random(int n) const
             while (this_might_be_in_vector)
             {
                 // std::cout << "haven't found it not in vector\n";
-                std::vector<Card>::iterator to_ret_itr;
-                for (to_ret_itr = to_return.begin(); to_ret_itr != to_return.end(); ++to_ret_itr)
-                {
-                    // std::cout << "looking through vector already chosen size " << to_return.size() << std::endl;
-                    if (*to_ret_itr == *deck_itr)
-                    {
-                        ++deck_itr;
-                        break;
-                    }
-                }
+                std::vector<Card>::iterator to_ret_itr = std::find(to_return.begin(), to_return.end(), *deck_itr);
                 if (to_ret_itr == to_return.end())  // got through the vector without finding it
                     this_might_be_in_vector = false;
+                else
+                    ++deck_itr;
             }
             --choice;
         }

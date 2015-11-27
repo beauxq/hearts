@@ -3,6 +3,7 @@
 
 #include <vector> // ?
 #include <utility>  // pair ?
+#include <unordered_set>
 #include <set>
 
 #include "Card.h"
