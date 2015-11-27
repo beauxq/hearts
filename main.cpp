@@ -2,11 +2,14 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <ctime>
 
 #include "Deck.h"  // test
 #include "Game.h"
 #include "Text_UI.h"
 
+// apparently, sfml + windows gcc = broken exception handling
+// maybe i'll figure it out later, for now just avoid exception handling
 void except_test()
 {
     try
@@ -87,8 +90,7 @@ int main()
 {
     srand(time(NULL));
 
-    // test_text_ui();
-    except_test();
+    test_text_ui();
 
     return 0;
 }

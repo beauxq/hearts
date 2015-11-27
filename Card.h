@@ -1,8 +1,6 @@
 #ifndef CARD_H_INCLUDED
 #define CARD_H_INCLUDED
 
-#include <cstddef>
-
 enum Suit { CLUBS, DIAMONDS, SPADES, HEARTS, SUIT_COUNT };
 
 class Card

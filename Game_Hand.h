@@ -2,7 +2,6 @@
 #define GAME_HAND_H_INCLUDED
 
 #include <vector>
-#include <unordered_set>
 
 #include "Deck.h"
 #include "Card.h"

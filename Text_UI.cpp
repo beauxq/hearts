@@ -102,28 +102,13 @@ std::string Text_UI::direction_str(const int& how_many_players_to_the_left) cons
 Card Text_UI::choose_card(const std::vector<Card>& hand_vector) const
 {
     std::string choice;
-    Card card_choice;
 
     std::getline(std::cin, choice);
-    try
-    {
-        int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
-        if (choice_index >= hand_vector.size() || choice_index < 0)
-            throw 20; //std::out_of_range("out of range");
-        card_choice = hand_vector.at(strtol(choice.c_str(), nullptr, 10) - 1);  // stoi not working with my compiler
-        // card_choice = hand_vector.at(std::stoi(choice) - 1);
-    }
-    catch (int e) //std::out_of_range e)
-    {
-        std::cout << "caught";
-        card_choice = Card();  // 0 value
-    }
-    catch (std::invalid_argument e)
-    {
-        card_choice = Card();  // 0 value
-    }
-
-    return card_choice;
+    int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
+    if (choice_index >= hand_vector.size() || choice_index < 0)  // invalid choice
+        return Card();  // 0 value
+    else  // valid choice
+        return hand_vector.at(choice_index);
 }
 
 std::vector<Card> Text_UI::input_passing_choices(const Deck& hand) const

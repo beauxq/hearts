@@ -16,9 +16,8 @@ private:
     Suit sort_order[SUIT_COUNT];
 
     int card_count;
-    // std::pair<unsigned int, unsigned int> suit_dividers[SUIT_COUNT];  // all of this suit in [first, second) (original/default order is index)
 public:
-    // TODO: this is actually const_iterator, no need for normal iterator yet
+    // TODO: this is actually const_iterator, no need for normal iterator yet (probably ever)
     class iterator
     {
     private:
@@ -65,7 +64,7 @@ public:
 
     bool is_empty() const { return card_count == 0; }
 
-    void clear();  // TODO: implement
+    void clear();
 
     void fill();
 };

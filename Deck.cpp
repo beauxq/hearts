@@ -6,7 +6,7 @@
 #include <algorithm>  // find
 
 // whether ace is high is defined here (1-13 or 2-14)
-const int Deck::LOW = 2;  // must be > 0 or constructor will break
+const int Deck::LOW = 2;
 const int Deck::HIGH = 14;
 
 Deck::iterator Deck::begin() const
