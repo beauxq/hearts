@@ -43,8 +43,8 @@ public:
     iterator begin() const;
     iterator end() const;
 
-    std::set<Card>::iterator suit_begin(const Suit& suit) { return cards[suit].begin(); }
-    std::set<Card>::iterator suit_end(const Suit& suit) { return cards[suit].end(); }
+    std::set<Card>::iterator suit_begin(const Suit& suit) const { return cards[suit].begin(); }
+    std::set<Card>::iterator suit_end(const Suit& suit) const { return cards[suit].end(); }
 
     static const int LOW;  // 2 (whether ace is high is defined in these: 1-13 or 2-14)
     static const int HIGH;  // 14
@@ -79,7 +79,7 @@ public:
     /** @returns the number of cards of the specified suit */
     size_t count(const Suit& suit) const { return cards[suit].size(); }
 
-    bool contains_non_points();  // TODO: ? this is messy / breaking oop (how many places will things have to change for alternate scoring rules?)
+    bool contains_non_points() const;  // TODO: ? this is messy / breaking oop (how many places will things have to change for alternate scoring rules?)
 };
 
 #endif // DECK_H_INCLUDED

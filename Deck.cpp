@@ -153,7 +153,7 @@ void Deck::fill()
     }
 }
 
-bool Deck::contains_non_points()
+bool Deck::contains_non_points() const
 {
     return (cards[CLUBS].size() ||
             cards[DIAMONDS].size() ||

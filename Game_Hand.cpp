@@ -5,7 +5,7 @@
 
 #include "Deck.h"
 
-int Game_Hand::points_for(const Card& card)
+int Game_Hand::points_for(const Card& card) const
 {
     // TODO: magic numbers, scoring options
     if (card.get_suit() == HEARTS)
@@ -121,7 +121,7 @@ void Game_Hand::end_hand()
     // TODO: shoot the moon points
 }
 
-void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices)
+void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
 {
     /*
     O(n) for a function that will be called millions of times per game
@@ -191,7 +191,7 @@ void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices)
         {
             if (hands[whose_turn].contains_non_points())  // have non-points
             {
-                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play anything (non-points)
+                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play any non-points
                 {
                     if (! points_for(*itr))
                     {

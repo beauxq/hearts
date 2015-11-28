@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include <cstdlib>  // strtol (stoi isn't working on my compiler)
+#include <cstdlib>  // rand, size_t, strtol (stoi isn't working on my compiler, nor exception handling)
 #include <algorithm>  // find
 
 void Text_UI::show_game_scores() const
@@ -64,6 +64,9 @@ std::string Text_UI::card_str(const Card& card) const
         break;
     case 14:
         to_return = "Ace";
+        break;
+    default:
+        to_return = "ERROR: CARD HAS BAD VALUE!";
     }
     to_return += " of ";
     switch (card.get_suit())
@@ -79,6 +82,9 @@ std::string Text_UI::card_str(const Card& card) const
         break;
     case HEARTS:
         to_return += "Hearts";
+        break;
+    default:
+        to_return += "ERROR: CARD HAS BAD SUIT!";
     }
 
     return to_return;
@@ -95,7 +101,7 @@ std::string Text_UI::direction_str(const int& how_many_players_to_the_left) cons
     case 3:
         return "right";
     default:
-        return "error";
+        return "ERROR: BAD DIRECTION SENT TO direction_str!";
     }
 }
 
@@ -105,7 +111,7 @@ Card Text_UI::choose_card(const std::vector<Card>& hand_vector) const
 
     std::getline(std::cin, choice);
     int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
-    if (choice_index >= hand_vector.size() || choice_index < 0)  // invalid choice
+    if (size_t(choice_index) >= hand_vector.size() || choice_index < 0)  // invalid choice
         return Card();  // 0 value
     else  // valid choice
         return hand_vector.at(choice_index);
@@ -142,14 +148,45 @@ Card Text_UI::input_play_choice(const Deck& hand) const
 {
     Card to_return;
 
-    std::vector<Card> hand_vector;
-    // copy hand to vector
+    std::vector<Card> valid_choices;
+    game.hand.find_valid_choices(valid_choices);
+
+    size_t current_valid_choice = 0;
+    std::vector<int> indices_of_valid_choices;
+
+    // put indices of valid choices in the right spot
     for (auto itr = hand.begin(); itr != hand.end(); ++itr)
-        hand_vector.push_back(*itr);
+    {
+        if ((current_valid_choice < valid_choices.size()) &&  // valid choice left to find
+            (*itr == valid_choices[current_valid_choice]))  // found here
+        {
+            indices_of_valid_choices.push_back(current_valid_choice);
+            ++current_valid_choice;
+        }
+        else  // not here, or none left to find
+            indices_of_valid_choices.push_back(-1);  // flag for not valid / illegal play
+    }
 
     std::cout << "card to play? ";
     while (! to_return.get_value())
-        to_return = choose_card(hand_vector);
+    {
+        std::string choice;
+
+        std::getline(std::cin, choice);
+        int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
+        if (size_t(choice_index) >= indices_of_valid_choices.size() || choice_index < 0)  // invalid menu option
+            to_return = Card();  // 0 value
+        else  // one of the menu options
+        {
+            if (indices_of_valid_choices[choice_index] == -1)  // illegal play
+            {
+                to_return = Card();  // 0 value
+                std::cout << "That play is not allowed.\n";
+            }
+            else  // legal play
+                to_return = valid_choices[indices_of_valid_choices[choice_index]];
+        }
+    }
 
     return to_return;
 }
@@ -194,9 +231,14 @@ void Text_UI::play()
             {
                 if (! game.hand.is_human(game.hand.get_whose_turn()))
                 {
+                    std::vector<Card> valid_choices;
                     Card to_play;
-                    auto hand_itr = game.hand.get_hands()[game.hand.get_whose_turn()].begin();
-                    to_play = *hand_itr;
+
+                    game.hand.find_valid_choices(valid_choices);
+
+                    // AI here
+                    to_play = valid_choices[rand() % valid_choices.size()];
+
                     std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << card_str(to_play) << std::endl;
                     game.hand.play_card(to_play);
                 }

@@ -28,7 +28,7 @@ private:
     int whose_turn;
     bool hearts_broken;
 
-    int points_for(const Card& card);
+    int points_for(const Card& card) const;
 
 public:
     Game_Hand();
@@ -52,7 +52,7 @@ public:
     void end_hand();  // shoot the moon points
 
     // rules
-    void find_valid_choices(std::vector<Card>& valid_choices);
+    void find_valid_choices(std::vector<Card>& valid_choices) const;
 };
 
 #endif // GAME_HAND_H_INCLUDED
