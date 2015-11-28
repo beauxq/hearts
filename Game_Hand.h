@@ -50,6 +50,9 @@ public:
     void play_card(const Card& card);
     void end_trick();  // TODO: returns who won the trick? (for UI)
     void end_hand();  // shoot the moon points
+
+    // rules
+    void find_valid_choices(std::vector<Card>& valid_choices);
 };
 
 #endif // GAME_HAND_H_INCLUDED

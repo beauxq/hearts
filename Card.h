@@ -3,6 +3,9 @@
 
 enum Suit { CLUBS, DIAMONDS, SPADES, HEARTS, SUIT_COUNT };
 
+// this class is essentially const
+// because everything is either private or constructor or const
+// (no setters)
 class Card
 {
 private:
@@ -30,8 +33,8 @@ public:
     bool beats_in_suit_of(const Card& lead) const;
 
     // getters
-    int get_value() const { return value; }
-    Suit get_suit() const { return suit; }
+    const int& get_value() const { return value; }
+    const Suit& get_suit() const { return suit; }
 
     // TODO: str() string representation of card? (would only be for testing and debugging)
 };

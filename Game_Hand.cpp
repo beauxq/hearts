@@ -120,3 +120,154 @@ void Game_Hand::end_hand()
 {
     // TODO: shoot the moon points
 }
+
+void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices)
+{
+    /*
+    O(n) for a function that will be called millions of times per game
+    efficiency is important
+    I made this chart trying to work out the best organization
+
+    key:
+    lead - I am first player of trick
+    first - first trick of the hand
+    hb - hearts already broken
+
+    l - whether I have suit matching lead suit matters
+    h - whether I have non-hearts matters
+    p - whether I have non-points matters
+    - - nothing matters
+
+    2c - two of clubs
+
+                            3-dimensional table
+                lead y	lead no
+        first y	-(2c)	l p
+        hb n	h	    l
+        hb y	-	    l
+
+                            list
+                                        T(n) (if going through cards to see what matters, then going through to get valid cards)
+        lead y first y hb y     -		0 (impossible)
+        lead y first y hb n     -   	1 (2c)
+        lead y first n hb y     -       n
+        lead y first n hb n     h		2n
+        lead n first y hb y     -		0 (impossible)
+        lead n first y hb n     l p		2n	if l then p done (l can stop first itr, p can't)
+        lead n first n hb y     l       2n
+        lead n first n hb n     l		2n
+                                        (but not iterating twice because have sets of suits)
+
+    lead n   happens 3 times as often as  lead y
+    first n  happens thousands of times more often than  first y
+    hb is probably about equal y and n
+    */
+
+    // bool found_non_points = false;
+    // bool found_non_hearts = false;
+    // bool found_lead_suit = false;
+    // bool points_allowed;
+    // bool hearts_allowed;
+    // bool non_lead_suit_allowed;
+
+    // this might look long and messy, but I think it's the most efficient
+    // here we go...
+    if (hands[whose_turn].size() == 13)  // first trick
+    {
+        if (played_card_count == 0)  // first player
+        {
+            valid_choices.push_back(STARTING_CARD);  // two of clubs
+            return;  // nothing else
+        }
+        // not first player
+        if (hands[whose_turn].count(CLUBS))  // must match lead suit (clubs)
+        {
+            for (auto itr = hands[whose_turn].suit_begin(CLUBS); itr != hands[whose_turn].suit_end(CLUBS); ++itr)
+            {
+                valid_choices.push_back(*itr);
+            }
+        }
+        else  // don't have any to match lead suit
+        {
+            if (hands[whose_turn].contains_non_points())  // have non-points
+            {
+                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play anything (non-points)
+                {
+                    if (! points_for(*itr))
+                    {
+                        valid_choices.push_back(*itr);
+                    }
+                }
+            }
+            else  // no non-points (no match for lead suit)
+            {
+                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play anything
+                {
+                    valid_choices.push_back(*itr);
+                }
+            }
+        }
+    }
+    else  // not first trick
+    {
+        if (played_card_count == 0)  // first player
+        {
+            if (hearts_broken)  // hearts broken
+            {
+                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play anything
+                {
+                    valid_choices.push_back(*itr);
+                }
+            }
+            else  // hearts not broken
+            {
+                if (hands[whose_turn].count(HEARTS) == hands[whose_turn].size())  // only hearts in hand
+                {
+                    for (auto itr = hands[whose_turn].suit_begin(HEARTS); itr != hands[whose_turn].suit_end(HEARTS); ++itr)  // play anything (hearts)
+                    {
+                        valid_choices.push_back(*itr);
+                    }
+                }
+                else  // non-hearts in hand, hearts not allowed
+                {
+                    // anything from 3 other suits
+                    for (auto itr = hands[whose_turn].suit_begin(CLUBS); itr != hands[whose_turn].suit_end(CLUBS); ++itr)
+                    {
+                        valid_choices.push_back(*itr);
+                    }
+                    for (auto itr = hands[whose_turn].suit_begin(DIAMONDS); itr != hands[whose_turn].suit_end(DIAMONDS); ++itr)
+                    {
+                        valid_choices.push_back(*itr);
+                    }
+                    for (auto itr = hands[whose_turn].suit_begin(SPADES); itr != hands[whose_turn].suit_end(SPADES); ++itr)
+                    {
+                        valid_choices.push_back(*itr);
+                    }
+                    // TODO: this is the only time in this function that we get something from more than one suit
+                    // without iterating over the entire hand
+                    // it may be useful to have the vector in the same order as iterating over the entire hand
+                    // so this may need to change to iterate over the entire hand (since the order of suits can change)
+                }
+            }
+        }
+        else  // not first player (and not first trick)
+        {
+            if (hands[whose_turn].count(played_cards[trick_leader].get_suit()))  // must match lead suit
+            {
+                for (auto itr  = hands[whose_turn].suit_begin(played_cards[trick_leader].get_suit());
+                          itr != hands[whose_turn].suit_end  (played_cards[trick_leader].get_suit());
+                        ++itr)
+                {
+                    valid_choices.push_back(*itr);
+                }
+            }
+            else  // don't have matching suit
+            {
+                for (auto itr = hands[whose_turn].begin(); itr != hands[whose_turn].end(); ++itr)  // play anything
+                {
+                    valid_choices.push_back(*itr);
+                }
+            }
+        }
+    }
+}

@@ -9,6 +9,8 @@
 const int Deck::LOW = 2;
 const int Deck::HIGH = 14;
 
+const int Deck::VALUE_COUNT = HIGH + 1 - LOW;
+
 Deck::iterator Deck::begin() const
 {
     iterator itr_to_return(this);
@@ -149,4 +151,12 @@ void Deck::fill()
                 ++card_count;
         }
     }
+}
+
+bool Deck::contains_non_points()
+{
+    return (cards[CLUBS].size() ||
+            cards[DIAMONDS].size() ||
+            (cards[SPADES].size() > 1) ||
+            (cards[SPADES].size() /* exactly 1 spade */ && (cards[SPADES].begin()->get_value() != 12)));
 }
