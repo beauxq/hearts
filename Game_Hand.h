@@ -35,7 +35,7 @@ public:
 
     // getters
     const int& get_whose_turn() const { return whose_turn; }
-    const std::vector<Deck>& get_hands() const { return hands; }
+    const std::vector<Deck>& get_hands() const { return hands; }  // TODO: make player the parameter?
     const int& get_score(const int& player) const { return scores[player]; }
     const bool& is_human(const int& player) const { return player_is_human[player]; }
     bool turns_left_in_trick() const { return played_card_count < PLAYER_COUNT; }
@@ -47,12 +47,17 @@ public:
     void pass(const int& from_player, const int& to_player, const std::vector<Card>& passed_cards);
     void receive_passed_cards();  // TODO: return which cards (for UI)
     void reset_trick();
-    void play_card(const Card& card);
-    void end_trick();  // TODO: returns who won the trick? (for UI)
+    void play_card(const Card& card);  // TODO: return hearts broken (for UI)
+    void end_trick();  // TODO: returns who took the trick? (for UI)
     void end_hand();  // shoot the moon points
 
     // rules
     void find_valid_choices(std::vector<Card>& valid_choices) const;
+
+    // AI
+    Card static_play_ai();
+    Card dynamic_play_ai();
+    std::vector<Card> pass_ai(const int& from_player);
 };
 
 #endif // GAME_HAND_H_INCLUDED

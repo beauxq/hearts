@@ -150,6 +150,10 @@ Card Text_UI::input_play_choice(const Deck& hand) const
 
     std::vector<Card> valid_choices;
     game.hand.find_valid_choices(valid_choices);
+    // this might seem inefficient because find_valid_choices iterates through the hand,
+    // then we iterate through the hand again to match indices with the vector
+    // but find_valid_choices is called a lot more than this UI function
+    // so we don't want find_valid_choices to do any more than it has to
 
     size_t current_valid_choice = 0;
     std::vector<int> indices_of_valid_choices;
@@ -168,7 +172,7 @@ Card Text_UI::input_play_choice(const Deck& hand) const
     }
 
     std::cout << "card to play? ";
-    while (! to_return.get_value())
+    while (! to_return.get_value())  // loop until valid input
     {
         std::string choice;
 
@@ -237,7 +241,8 @@ void Text_UI::play()
                     game.hand.find_valid_choices(valid_choices);
 
                     // AI here
-                    to_play = valid_choices[rand() % valid_choices.size()];
+                    to_play = game.hand.static_play_ai();
+                    // to_play = valid_choices[rand() % valid_choices.size()];
 
                     std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << card_str(to_play) << std::endl;
                     game.hand.play_card(to_play);

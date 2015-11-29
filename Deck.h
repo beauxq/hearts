@@ -45,6 +45,8 @@ public:
 
     std::set<Card>::iterator suit_begin(const Suit& suit) const { return cards[suit].begin(); }
     std::set<Card>::iterator suit_end(const Suit& suit) const { return cards[suit].end(); }
+    std::set<Card>::reverse_iterator suit_rbegin(const Suit& suit) const { return cards[suit].rbegin(); }
+    std::set<Card>::reverse_iterator suit_rend(const Suit& suit) const { return cards[suit].rend(); }
 
     static const int LOW;  // 2 (whether ace is high is defined in these: 1-13 or 2-14)
     static const int HIGH;  // 14
