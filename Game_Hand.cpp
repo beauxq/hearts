@@ -35,6 +35,7 @@ void Game_Hand::reset_hand()
         unknown_cards_for_player[i].fill();
         scores[i] = 0;
         passed_cards_to_player[i].clear();
+        pass_count = 0;
         hearts_broken = false;
     }
 }
@@ -65,6 +66,7 @@ void Game_Hand::pass(const int& from_player, const int& to_player, const std::ve
         passed_cards_to_player[to_player].push_back(*itr);
         hands[from_player].erase(*itr);
     }
+    ++pass_count;
 }
 
 void Game_Hand::receive_passed_cards()

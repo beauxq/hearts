@@ -19,6 +19,7 @@ private:
     int scores[PLAYER_COUNT];
 
     std::vector<std::vector<Card> > passed_cards_to_player;  // first index is player passed to
+    int pass_count;  // how many players have passed
 
     // trick
     std::vector<Card> played_cards;
@@ -40,6 +41,10 @@ public:
     const bool& is_human(const int& player) const { return player_is_human[player]; }
     bool turns_left_in_trick() const { return played_card_count < PLAYER_COUNT; }
     const bool& hearts_is_broken() { return hearts_broken; }
+    const int& get_pass_count() { return pass_count; }
+
+    // setter
+    void set_pass_count() { pass_count = PLAYER_COUNT; }  // to be called on the keeper hand to say we've already passed
 
     // each hand, user interface calls these in this order
     void reset_hand();

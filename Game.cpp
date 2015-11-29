@@ -15,26 +15,30 @@ void Game::game_reset()
 
 void Game::end_hand()
 {
+    bool game_over = false;
     // shoot the moon already handled in Game_Hand::end_hand
     for (int player = 0; player < PLAYER_COUNT; ++player)
     {
         total_scores[player] += hand.get_score(player);
         if (total_scores[player] > 99)
         {
-            if (winners.empty())
-            {
-                winners.push_back(player);
-            }
-            else if (total_scores[player] > total_scores[winners[0]])
+            game_over = true;
+        }
+    }
+    if (game_over)
+    {
+        winners.push_back(0);
+        for (int player = 1; player < PLAYER_COUNT; ++player)
+        {
+            if (total_scores[player] < winners[0])  // better
             {
                 winners.clear();
                 winners.push_back(player);
             }
-            else if (total_scores[player] == total_scores[winners[0]])  // tie
+            else if (total_scores[player] == winners[0])  // tie
             {
                 winners.push_back(player);
             }
-            // else above 99 but not highest score
         }
     }
 }

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdexcept>
 #include <cstdlib>  // rand, size_t, strtol (stoi isn't working on my compiler, nor exception handling)
 #include <algorithm>  // find
 

@@ -7,6 +7,7 @@
 #include "Deck.h"  // test
 #include "Game.h"
 #include "Text_UI.h"
+#include "Gui.h"
 
 // apparently, sfml + windows gcc = broken exception handling
 // maybe i'll figure it out later, for now just avoid exception handling
@@ -20,6 +21,12 @@ void except_test()
     {
         std::cout << "caught\n";
     }
+}
+
+void test_gui()
+{
+    Gui gui;
+    gui.play();
 }
 
 void test_text_ui()
@@ -65,11 +72,20 @@ void test_some_inside_stuff()
     {
         std::cout << itr->get_value() << ' ' << itr->get_suit() << std::endl;
     }
+}
 
+void sfml_test()
+{
     // test sfml
-    sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML works!");
+    sf::Texture card_texture;
+    card_texture.loadFromFile("resources/Diamond.jpg", sf::IntRect(8,6,272,422));
+    card_texture.setSmooth(true);
+    sf::Sprite card;
+    card.setTexture(card_texture);
+    card.setScale(.238, .238);
+    // sf::CircleShape shape(100.f);
+    // shape.setFillColor(sf::Color::Green);
 
     while (window.isOpen())
     {
@@ -81,7 +97,7 @@ void test_some_inside_stuff()
         }
 
         window.clear();
-        window.draw(shape);
+        window.draw(card);
         window.display();
     }
 }
@@ -90,7 +106,7 @@ int main()
 {
     srand(time(NULL));
 
-    test_text_ui();
+    test_gui();
 
     return 0;
 }
