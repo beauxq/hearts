@@ -23,6 +23,10 @@ private:
     sf::Font font;
     sf::Color bg_color;
 
+    int hand_y_position;
+    int width_of_card_space;
+    int hand_x_position;
+
     bool window_processes();
 
     std::vector<std::vector<sf::Texture> > card_textures;  // first index is suit

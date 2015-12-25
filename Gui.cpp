@@ -29,7 +29,7 @@ bool Gui::window_processes()
 void Gui::load()
 {
     int cards_finished = 0;
-    //load_images(&cards_finished);
+    // load_images(&cards_finished);  // to load without threading, comment out thread lines
     std::thread load_thread(&Gui::load_images, this, &cards_finished);
     load_screen(&cards_finished);
 
@@ -101,7 +101,7 @@ void Gui::load_images(int* cards_finished)
             default:
                 ; // wha...  !?
             }
-            std::cout << "am i getting here?" << std::endl;
+            // std::cout << "am i getting here?" << std::endl;  // test line
             if (! card_textures[suit][value].loadFromFile(FILENAMES[suit], sf::IntRect(x, y, X_SIZE, Y_SIZE)))
             {
                 *cards_finished = -1;  // error
@@ -179,16 +179,18 @@ void Gui::show_hand_scores() const
 
 void Gui::show_hand(const Deck& hand)
 {
-    int y_position = window.getSize().y - card_sprites[0][2].getGlobalBounds().height * 3 / 2;
-    int width_of_card_space = card_sprites[0][2].getGlobalBounds().width * 21 / 20;
-    int x_position = window.getSize().x / 2 - (width_of_card_space * hand.size()) / 2;
+    hand_y_position = window.getSize().y - card_sprites[0][2].getGlobalBounds().height * 3 / 2;
+    width_of_card_space = card_sprites[0][2].getGlobalBounds().width * 21 / 20;
+    hand_x_position = window.getSize().x / 2 - (width_of_card_space * hand.size()) / 2;
+
+    int x_position = hand_x_position;  // each card
 
     for (auto itr = hand.begin(); itr != hand.end(); ++itr)
     {
-        draw_card(*itr, x_position, y_position);
+        draw_card(*itr, x_position, hand_y_position);
         x_position += width_of_card_space;
 
-        std::cout << "drawing a card at " << x_position << ' ' << y_position << std::endl;
+        std::cout << "drawing a card at " << x_position << ' ' << hand_y_position << std::endl;
     }
 }
 
@@ -312,9 +314,8 @@ void Gui::pass()
 {
     std::vector<std::vector<Card> > cards_to_pass(PLAYER_COUNT);  // first index is from player
 
-    // start AI threads
-    std::vector<std::thread> threads;
-    for (int player_passing = PLAYER_COUNT - 1; player_passing >= 0; --player_passing)
+    std::vector<std::thread> threads;  // so AI can work while human is choosing
+    for (int player_passing = PLAYER_COUNT - 1; player_passing >= 0; --player_passing)  // start from end to start AI threads first, before starting human input
     {
         if (! game.hand.is_human(player_passing))  // not human
         {
@@ -330,8 +331,28 @@ void Gui::pass()
 
             while (window.isOpen())
             {
-                if (! window_processes())
-                    window.close();
+                sf::Event event;
+                while (window.pollEvent(event))
+                {
+                    if (event.type == sf::Event::Closed)
+                        window.close();
+                    else if (event.type == sf::Event::MouseButtonReleased)
+                    {
+                        // check vertical position
+                        // card click
+                        if (event.mouseButton.y >= hand_y_position &&
+                            event.mouseButton.y < hand_y_position + card_sprites[0][2].getGlobalBounds().height)
+                        {
+
+                        }
+
+                    }
+                }
+
+                window.clear();
+                screen_sprite.setTexture(screen_texture.getTexture());
+                window.draw(screen_sprite);
+                window.display();
 
             }
         }
