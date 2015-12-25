@@ -26,7 +26,8 @@ void except_test()
 void test_gui()
 {
     Gui gui;
-    gui.play();
+    gui.test();
+    //gui.play();
 }
 
 void test_text_ui()

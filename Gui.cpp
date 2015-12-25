@@ -29,7 +29,8 @@ bool Gui::window_processes()
 void Gui::load()
 {
     int cards_finished = 0;
-    std::thread load_thread(load_images, this, &cards_finished);
+    //load_images(&cards_finished);
+    std::thread load_thread(&Gui::load_images, this, &cards_finished);
     load_screen(&cards_finished);
 
     load_thread.join();
@@ -100,6 +101,7 @@ void Gui::load_images(int* cards_finished)
             default:
                 ; // wha...  !?
             }
+            std::cout << "am i getting here?" << std::endl;
             if (! card_textures[suit][value].loadFromFile(FILENAMES[suit], sf::IntRect(x, y, X_SIZE, Y_SIZE)))
             {
                 *cards_finished = -1;  // error
@@ -316,7 +318,7 @@ void Gui::pass()
     {
         if (! game.hand.is_human(player_passing))  // not human
         {
-            threads.push_back(std::thread(ai_pass, this, player_passing, &(cards_to_pass[player_passing])));
+            threads.push_back(std::thread(&Gui::ai_pass, this, player_passing, &(cards_to_pass[player_passing])));
         }
         else  // human
         {
