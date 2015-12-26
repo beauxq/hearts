@@ -153,6 +153,18 @@ void Deck::fill()
     }
 }
 
+const Card& Deck::at(int index) const
+{
+    auto itr = begin();
+    while (index > 0)
+    {
+        ++itr;
+        --index;
+    }
+
+    return *itr;
+}
+
 bool Deck::contains_non_points() const
 {
     return (cards[CLUBS].size() ||

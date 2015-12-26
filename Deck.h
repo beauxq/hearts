@@ -81,6 +81,8 @@ public:
     /** @returns the number of cards of the specified suit */
     size_t count(const Suit& suit) const { return cards[suit].size(); }
 
+    const Card& at(int index) const;
+
     bool contains_non_points() const;  // TODO: ? this is messy / breaking oop (how many places will things have to change for alternate scoring rules?)
 };
 

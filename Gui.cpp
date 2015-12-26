@@ -6,6 +6,7 @@
 #include <cstdlib>  // rand, size_t, strtol (stoi isn't working on my compiler, nor exception handling)
 #include <algorithm>  // find
 #include <thread>
+#include <unordered_set>
 
 #include "Card.h"
 
@@ -115,6 +116,29 @@ void Gui::load_images(int* cards_finished)
             ++*cards_finished;
         }
     }
+
+    const int arrow_size = 40;
+
+    arrow_texture.create(arrow_size, arrow_size);
+
+    sf::RectangleShape rectangle(sf::Vector2f(arrow_size / 2, arrow_size / 2));
+    rectangle.setFillColor(sf::Color(255, 127, 0));
+    rectangle.setPosition(arrow_size / 2, arrow_size / 4);
+
+    sf::ConvexShape triangle;
+    triangle.setPointCount(3);
+    triangle.setPoint(0, sf::Vector2f(arrow_size / 2, 0));
+    triangle.setPoint(1, sf::Vector2f(0, arrow_size / 2));
+    triangle.setPoint(2, sf::Vector2f(arrow_size / 2, arrow_size));
+    triangle.setFillColor(sf::Color(255, 127, 0));
+
+    arrow_texture.draw(rectangle);
+    arrow_texture.draw(triangle);
+
+    arrow_texture.display();
+
+    arrow_sprite.setTexture(arrow_texture.getTexture());
+    arrow_sprite.setPosition(window.getSize().x / 2 - arrow_size / 2, window.getSize().y / 2 - arrow_size / 2);
 }
 
 void Gui::load_screen(int* cards_finished)
@@ -177,21 +201,40 @@ void Gui::show_hand_scores() const
                                     << game.hand.get_score(3) << std::endl;
 }
 
-void Gui::show_hand(const Deck& hand)
+void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
+    /** second parameter is which cards to display higher than others (for passing) */
+
     hand_y_position = window.getSize().y - card_sprites[0][2].getGlobalBounds().height * 3 / 2;
     width_of_card_space = card_sprites[0][2].getGlobalBounds().width * 21 / 20;
     hand_x_position = window.getSize().x / 2 - (width_of_card_space * hand.size()) / 2;
 
     int x_position = hand_x_position;  // each card
 
+    int index = 0;
     for (auto itr = hand.begin(); itr != hand.end(); ++itr)
     {
-        draw_card(*itr, x_position, hand_y_position);
+        if (indices_of_higher_cards.find(index) == indices_of_higher_cards.end())
+            draw_card(*itr, x_position, hand_y_position);
+        else
+            draw_card(*itr, x_position, hand_y_position - card_sprites[0][2].getGlobalBounds().height / 5);
         x_position += width_of_card_space;
 
         std::cout << "drawing a card at " << x_position << ' ' << hand_y_position << std::endl;
+
+        ++index;
     }
+}
+
+void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
+{
+            screen_texture.clear(bg_color);
+            show_game_scores();
+            show_hand_scores();
+            show_hand(hand, indices_of_higher_cards);
+            screen_texture.display();
+
+            std::cout << indices_of_higher_cards.size() << std::endl;
 }
 
 void Gui::draw_card(const Card& card, float x, float y)
@@ -323,11 +366,9 @@ void Gui::pass()
         }
         else  // human
         {
-            screen_texture.clear(bg_color);
-            show_game_scores();
-            show_hand_scores();
-            show_hand(game.hand.get_hands()[player_passing]);
-            screen_texture.display();
+            std::unordered_set<int> indices_to_pass;
+
+            pass_screen_draw(game.hand.get_hands()[player_passing]);
 
             while (window.isOpen())
             {
@@ -338,15 +379,65 @@ void Gui::pass()
                         window.close();
                     else if (event.type == sf::Event::MouseButtonReleased)
                     {
+                        // I don't care which button it is
                         // check vertical position
                         // card click
-                        if (event.mouseButton.y >= hand_y_position &&
-                            event.mouseButton.y < hand_y_position + card_sprites[0][2].getGlobalBounds().height)
+                        if (event.mouseButton.y >= (hand_y_position - card_sprites[0][2].getGlobalBounds().height / 5) &&
+                            event.mouseButton.y < (hand_y_position + card_sprites[0][2].getGlobalBounds().height))
                         {
+                            int which_card_index = -1;
+                            int x_position_in_hand = event.mouseButton.x - hand_x_position;
+                            if (x_position_in_hand > 0 &&
+                                x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
+                            {
+                                which_card_index = x_position_in_hand / width_of_card_space;
+                                if (which_card_index >= game.hand.get_hands()[player_passing].size())
+                                    which_card_index = -1;
+                            }
+                            if (which_card_index >= 0)
+                            {
+                                // std::cout << "clicked on card " << which_card_index << std::endl;
+                                // toggle card in/out of passed cards
+                                if (indices_to_pass.size() > 2)
+                                {
+                                    // only remove
+                                    indices_to_pass.erase(which_card_index);
+                                }
+                                else  // less than 3 items
+                                {
+                                    if (! indices_to_pass.erase(which_card_index))  // if didn't erase something
+                                    {
+                                        indices_to_pass.insert(which_card_index);
+                                    }
+                                }
 
+                                /* testing
+                                for (auto itr = indices_to_pass.begin(); itr != indices_to_pass.end(); ++itr)
+                                    std::cout << *itr << ' ';
+                                std::cout << std::endl;
+                                */
+
+                                pass_screen_draw(game.hand.get_hands()[player_passing], indices_to_pass);
+                            }
+                        }
+                        // else click not in card y
+                        else if (event.mouseButton.y >= arrow_y &&
+                                 event.mouseButton.y < (arrow_y + arrow_sprite.getGlobalBounds().height) &&
+                                 event.mouseButton.x >= arrow_x &&
+                                 event.mouseButton.x < (arrow_x + arrow_sprite.getGlobalBounds().width) &&
+                                 indices_to_pass.size() == 3)
+                        {
+                            // pass these cards
+                            for (auto itr = indices_to_pass.begin(); itr != indices_to_pass.end(); ++itr)
+                            {
+                                cards_to_pass[player_passing].push_back(game.hand.get_hands()[player_passing].at(*itr));
+                            }
+
+                            break;
                         }
 
                     }
+                    // else if other events
                 }
 
                 window.clear();

@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <vector>
+#include <unordered_set>
 
 #include "Card.h"
 #include "Deck.h"
@@ -32,6 +33,9 @@ private:
     std::vector<std::vector<sf::Texture> > card_textures;  // first index is suit
     std::vector<std::vector<sf::Sprite> > card_sprites;  // second index is value
 
+    sf::RenderTexture arrow_texture;
+    sf::Sprite arrow_sprite;
+
     void altload();
     void load();
     void load_images(int* cards_finished);
@@ -41,7 +45,8 @@ private:
 
     void show_game_scores() const;
     void show_hand_scores() const;
-    void show_hand(const Deck& hand);
+    void show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards = std::unordered_set<int>());
+    void pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards = std::unordered_set<int>());
 
     void draw_card(const Card& card, float x, float y);
     void draw_direction(const int& how_many_players_to_the_left) const;
