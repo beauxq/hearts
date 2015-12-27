@@ -132,6 +132,8 @@ void Gui::load_images(int* cards_finished)
     triangle.setPoint(2, sf::Vector2f(arrow_size / 2, arrow_size));
     triangle.setFillColor(sf::Color(255, 127, 0));
 
+    arrow_texture.clear(bg_color);
+
     arrow_texture.draw(rectangle);
     arrow_texture.draw(triangle);
 
@@ -232,6 +234,7 @@ void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indi
             show_game_scores();
             show_hand_scores();
             show_hand(hand, indices_of_higher_cards);
+            draw_direction();
             screen_texture.display();
 
             std::cout << indices_of_higher_cards.size() << std::endl;
@@ -243,19 +246,9 @@ void Gui::draw_card(const Card& card, float x, float y)
     screen_texture.draw(card_sprites[card.get_suit()][card.get_value()]);
 }
 
-void Gui::draw_direction(const int& how_many_players_to_the_left) const
+void Gui::draw_direction()
 {
-    switch (how_many_players_to_the_left)
-    {
-    case 1:
-        return;  // "left";
-    case 2:
-        return;  // "across";
-    case 3:
-        return;  // "right";
-    default:
-        return;  // "ERROR: BAD DIRECTION SENT TO direction_str!";
-    }
+    screen_texture.draw(arrow_sprite);
 }
 
 Card Gui::choose_card(const std::vector<Card>& hand_vector) const
@@ -370,7 +363,7 @@ void Gui::pass()
 
             pass_screen_draw(game.hand.get_hands()[player_passing]);
 
-            while (window.isOpen())
+            while (window.isOpen() && (cards_to_pass[player_passing].size() < 3))
             {
                 sf::Event event;
                 while (window.pollEvent(event))
@@ -421,23 +414,22 @@ void Gui::pass()
                             }
                         }
                         // else click not in card y
-                        else if (event.mouseButton.y >= arrow_y &&
-                                 event.mouseButton.y < (arrow_y + arrow_sprite.getGlobalBounds().height) &&
-                                 event.mouseButton.x >= arrow_x &&
-                                 event.mouseButton.x < (arrow_x + arrow_sprite.getGlobalBounds().width) &&
+                        else if (event.mouseButton.y >= arrow_sprite.getPosition().y &&
+                                 event.mouseButton.y < (arrow_sprite.getPosition().y + arrow_sprite.getGlobalBounds().height) &&
+                                 event.mouseButton.x >= arrow_sprite.getPosition().x &&
+                                 event.mouseButton.x < (arrow_sprite.getPosition().x + arrow_sprite.getGlobalBounds().width) &&
                                  indices_to_pass.size() == 3)
                         {
+                            std::cout << "clicked on arrow\n";
                             // pass these cards
                             for (auto itr = indices_to_pass.begin(); itr != indices_to_pass.end(); ++itr)
                             {
                                 cards_to_pass[player_passing].push_back(game.hand.get_hands()[player_passing].at(*itr));
                             }
-
-                            break;
                         }
-
+                        // else other mouse clicks (not card or middle)
                     }
-                    // else if other events
+                    // else if other events (not mouse button release or close)
                 }
 
                 window.clear();
@@ -446,17 +438,64 @@ void Gui::pass()
                 window.display();
 
             }
-        }
-    }
+            // continue window processes until all players have chosen cards to pass
+            bool all_players_passed = false;
+
+            while (! all_players_passed)
+            {
+                if (! window_processes())
+                    window.close();
+
+                // check 3 AI players
+                all_players_passed = true;
+                for (int i = 0; i < 3; ++i)
+                    if (cards_to_pass[i].size() < 3)
+                        all_players_passed = false;
+
+            }
+        }  // end human
+    }  // end all players
 
     // join threads
     for (auto itr = threads.begin(); itr != threads.end(); ++itr)
         itr->join();
+
+    // pass the chosen cards
+    for (int player_passing = 0; player_passing < PLAYER_COUNT; ++player_passing)
+    {
+        game.hand.pass(player_passing,
+                       (player_passing + game.get_passing_direction()) % PLAYER_COUNT,
+                       cards_to_pass[player_passing]);
+    }
+
+    // pick up passed cards
+    game.hand.receive_passed_cards();
+
+    // TODO: show the passed cards for 2? seconds?
+}
+
+void Gui::computer_turn()
+{
+    std::vector<Card> valid_choices;
+    Card to_play;
+
+    game.hand.find_valid_choices(valid_choices);
+
+    // TODO: send AI thread off while showing the screen (previously played cards) for 1 second
+    // don't close the window until human's turn
+    // AI here
+    to_play = game.hand.static_play_ai();
+    // to_play = valid_choices[rand() % valid_choices.size()];
+
+    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.get_value() << ' ' << to_play.get_suit() << std::endl;
+    game.hand.play_card(to_play);
 }
 
 void Gui::play()
 {
     load();  // load images into memory
+
+    // TODO: load saved game
     game.game_reset();
     game.hand.reset_hand();
     game.hand.deal_hands();
@@ -475,10 +514,21 @@ void Gui::play()
             {
                 pass();
             }
+
+            // passing is done, now play until a human's turn
+            // (still part of the passing section until a human needs to play)
+            game.hand.reset_trick();
+
+            while (! game.hand.is_human(game.hand.get_whose_turn()))
+            {
+                computer_turn();
+            }
+            // now is human turn
         }
-        else  // passing is done
+        else  // passing is done, human's turn to play
         {
             // playing
+            std::cout << "entered playing section\n";
         }
     }
 

@@ -49,7 +49,7 @@ private:
     void pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards = std::unordered_set<int>());
 
     void draw_card(const Card& card, float x, float y);
-    void draw_direction(const int& how_many_players_to_the_left) const;
+    void draw_direction();
 
     /** this function called in other input functions
         @returns default constructed card for failure */
@@ -72,7 +72,10 @@ public:
         font.loadFromFile("resources/LiberationSans-Regular.ttf");
     }
 
+    // TODO: move to private what doesn't need to be public
     void pass();
+
+    void computer_turn();
 
     void play();
 
