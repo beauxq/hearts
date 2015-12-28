@@ -45,8 +45,10 @@ private:
 
     void show_game_scores() const;
     void show_hand_scores() const;
+    void show_played_cards();
     void show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards = std::unordered_set<int>());
     void pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards = std::unordered_set<int>());
+    void turn_screen_draw();
 
     void draw_card(const Card& card, float x, float y);
     void draw_direction();

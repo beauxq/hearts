@@ -203,6 +203,39 @@ void Gui::show_hand_scores() const
                                     << game.hand.get_score(3) << std::endl;
 }
 
+void Gui::show_played_cards()
+{
+    std::vector<Card> cards = game.hand.get_played_cards();
+
+    sf::Vector2f base_location;  // bottom middle card
+    base_location.x = window.getSize().x / 2 - card_sprites[0][2].getGlobalBounds().width / 2;
+    base_location.y = window.getSize().y / 2 - card_sprites[0][2].getGlobalBounds().height / 2;
+
+    for (int i = 0; i < PLAYER_COUNT; ++i)
+    {
+        if (cards[i].get_value() > 0)
+        {
+            switch (i)
+            {
+            case 0:
+                draw_card(cards[i], base_location.x, base_location.y);
+            case 1:
+                draw_card(cards[i],
+                          base_location.x - card_sprites[0][2].getGlobalBounds().width * 21 / 20,
+                          base_location.y - card_sprites[0][2].getGlobalBounds().height *21 / 40);
+            case 2:
+                draw_card(cards[i],
+                          base_location.x,
+                          base_location.y - card_sprites[0][2].getGlobalBounds().height * 21 / 20);
+            case 3:
+                draw_card(cards[i],
+                          base_location.x + card_sprites[0][2].getGlobalBounds().width * 21 / 20,
+                          base_location.y - card_sprites[0][2].getGlobalBounds().height *21 / 40);
+            }
+        }
+    }
+}
+
 void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
     /** second parameter is which cards to display higher than others (for passing) */
@@ -230,17 +263,25 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
 
 void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
-            screen_texture.clear(bg_color);
-            show_game_scores();
-            show_hand_scores();
-            show_hand(hand, indices_of_higher_cards);
-            draw_direction();
-            screen_texture.display();
+    screen_texture.clear(bg_color);
+    show_game_scores();
+    show_hand_scores();
+    show_hand(hand, indices_of_higher_cards);
+    draw_direction();
+    screen_texture.display();
 
-            std::cout << indices_of_higher_cards.size() << std::endl;
+    std::cout << indices_of_higher_cards.size() << std::endl;
 }
 
-void Gui::turn_screen_draw(const Deck& hand,)
+void Gui::turn_screen_draw()
+{
+    screen_texture.clear(bg_color);
+    show_game_scores();
+    show_hand_scores();
+    show_hand(game.hand.get_hands()[game.hand.get_whose_turn()]);
+    show_played_cards();
+    screen_texture.display();
+}
 
 void Gui::draw_card(const Card& card, float x, float y)
 {
@@ -496,6 +537,88 @@ void Gui::computer_turn()
 void Gui::human_turn()
 {
 
+    //while (window_processes());
+
+
+    // copy paste from input play choice text ui
+    Card to_play;
+
+    std::vector<Card> valid_choices;
+    game.hand.find_valid_choices(valid_choices);
+    // this might seem inefficient because find_valid_choices iterates through the hand,
+    // then we iterate through the hand again to match indices with the vector
+    // but find_valid_choices is called a lot more than this UI function
+    // so we don't want find_valid_choices to do any more than it has to
+
+    size_t current_valid_choice = 0;
+    std::vector<int> indices_of_valid_choices;
+
+    // put indices of valid choices in the right spot
+    for (auto itr = game.hand.get_hands()[game.hand.get_whose_turn()].begin();
+         itr != game.hand.get_hands()[game.hand.get_whose_turn()].end();
+         ++itr)
+    {
+        if ((current_valid_choice < valid_choices.size()) &&  // valid choice left to find
+            (*itr == valid_choices[current_valid_choice]))  // found here
+        {
+            indices_of_valid_choices.push_back(current_valid_choice);
+            ++current_valid_choice;
+        }
+        else  // not here, or none left to find
+            indices_of_valid_choices.push_back(-1);  // flag for not valid / illegal play
+    }
+
+    turn_screen_draw();
+
+    while (window.isOpen() && (to_play.get_value() == 0))  // loop until valid input
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            else if (event.type == sf::Event::MouseButtonReleased)
+            {
+                // I don't care which button it is
+                // check vertical position
+                // card click
+                if (event.mouseButton.y >= hand_y_position &&
+                    event.mouseButton.y < (hand_y_position + card_sprites[0][2].getGlobalBounds().height))
+                {
+                    int which_card_index = -1;
+                    int x_position_in_hand = event.mouseButton.x - hand_x_position;
+                    if (x_position_in_hand > 0 &&
+                        x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
+                    {
+                        which_card_index = x_position_in_hand / width_of_card_space;
+                        if (which_card_index >= game.hand.get_hands()[game.hand.get_whose_turn()].size())
+                            which_card_index = -1;
+                    }
+                    if (which_card_index >= 0)
+                    {
+                        if (indices_of_valid_choices[which_card_index] == -1)  // illegal play
+                        {
+                            to_play = Card();  // 0 value
+                            std::cout << "That play is not allowed.\n";  // TODO: message on screen
+                        }
+                        else  // legal play
+                            to_play = valid_choices[indices_of_valid_choices[which_card_index]];
+                    }
+                }
+                // else click not in card y
+            }
+            // else if other events (not mouse button release or close)
+        }
+
+        window.clear();
+        screen_sprite.setTexture(screen_texture.getTexture());
+        window.draw(screen_sprite);
+        window.display();
+    }
+    // window closed or valid card to play
+    // TODO: window close save game
+
+    game.hand.play_card(to_play);
 }
 
 void Gui::play()
@@ -538,6 +661,46 @@ void Gui::play()
             // playing
             std::cout << "entered human playing section\n";
             human_turn();
+
+            // play the rest of the trick (computers' turns)
+            while (game.hand.turns_left_in_trick())
+            {
+                computer_turn();
+            }
+            // end trick
+            game.hand.end_trick();
+            show_hand_scores();
+            std::cout << std::endl;
+            if (game.hand.get_hands()[0].size() > 0)  // more tricks to play
+            {
+                game.hand.reset_trick();
+                while (! game.hand.is_human(game.hand.get_whose_turn()))
+                {
+                    computer_turn();
+                }
+                // now is human turn
+            }
+            else  // end of hand
+            {
+                game.hand.end_hand();
+                game.end_hand();
+                game.change_passing();
+
+                // is game over?
+                if (game.get_winners().empty())  // not game over
+                {
+                    game.hand.reset_hand();
+                    game.hand.deal_hands();
+                }
+                else  // there's a winner game over
+                {
+                    // show winner (don't wait for click before resetting game, when that if window closes, it is reset)
+                    std::cout << "winner: " << game.get_winners()[0] << std::endl;
+                    game.game_reset();
+                    game.hand.reset_hand();
+                    game.hand.deal_hands();
+                }
+            }
         }
     }
 

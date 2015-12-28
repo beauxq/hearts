@@ -40,8 +40,9 @@ public:
     const int& get_score(const int& player) const { return scores[player]; }
     const bool& is_human(const int& player) const { return player_is_human[player]; }
     bool turns_left_in_trick() const { return played_card_count < PLAYER_COUNT; }
-    const bool& hearts_is_broken() { return hearts_broken; }
-    const int& get_pass_count() { return pass_count; }
+    const bool& hearts_is_broken() const { return hearts_broken; }
+    const int& get_pass_count() const { return pass_count; }
+    const std::vector<Card>& get_played_cards();  // first put null cards where cards haven't been played
 
     // setter
     void set_pass_count() { pass_count = PLAYER_COUNT; }  // to be called on the keeper hand to say we've already passed

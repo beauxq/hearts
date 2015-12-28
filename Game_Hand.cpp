@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 
+#include "Card.h"
 #include "Deck.h"
 
 int Game_Hand::points_for(const Card& card) const
@@ -25,6 +26,19 @@ Game_Hand::Game_Hand() :
     {
         player_is_human[i] = !i;  // player 0 human, rest not
     }
+}
+
+const std::vector<Card>& Game_Hand::get_played_cards()
+{
+    // put null cards where cards haven't been played
+    int player = whose_turn;
+    for (int handled = played_card_count; handled < PLAYER_COUNT; ++handled)
+    {
+        played_cards[player] = Card();
+        player = (player + 1) % PLAYER_COUNT;
+    }
+
+    return played_cards;
 }
 
 void Game_Hand::reset_hand()
