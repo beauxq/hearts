@@ -240,6 +240,8 @@ void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indi
             std::cout << indices_of_higher_cards.size() << std::endl;
 }
 
+void Gui::turn_screen_draw(const Deck& hand,)
+
 void Gui::draw_card(const Card& card, float x, float y)
 {
     card_sprites[card.get_suit()][card.get_value()].setPosition(x, y);
@@ -491,6 +493,11 @@ void Gui::computer_turn()
     game.hand.play_card(to_play);
 }
 
+void Gui::human_turn()
+{
+
+}
+
 void Gui::play()
 {
     load();  // load images into memory
@@ -527,8 +534,10 @@ void Gui::play()
         }
         else  // passing is done, human's turn to play
         {
+            // assert game.hand.is_human(game.hand.get_whose_turn())
             // playing
-            std::cout << "entered playing section\n";
+            std::cout << "entered human playing section\n";
+            human_turn();
         }
     }
 

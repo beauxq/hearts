@@ -77,6 +77,8 @@ public:
 
     void computer_turn();
 
+    void human_turn();
+
     void play();
 
     void test()
