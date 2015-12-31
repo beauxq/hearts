@@ -699,6 +699,7 @@ void Gui::play()
                     game.game_reset();
                     game.hand.reset_hand();
                     game.hand.deal_hands();
+                    // wait for click after resetting game
                 }
             }
         }

@@ -132,9 +132,26 @@ void Game_Hand::end_trick()
     // TODO: history of tricks?
 }
 
-void Game_Hand::end_hand()
+int Game_Hand::end_hand()
 {
-    // TODO: shoot the moon points
+    /** @returns who shot the moon, -1 if no one shot the moon */
+    // shoot the moon points
+    int win_player;  // to keep in scope after for loop
+    for (win_player = 0; win_player < PLAYER_COUNT; ++win_player)  // check if player got 26
+    {
+        if (scores[win_player] == 26)  // this player shot the moon
+        {
+            scores[win_player] = 0;
+            for (int other_player = 0; other_player < PLAYER_COUNT; ++other_player)
+            {
+                if (other_player != win_player)
+                    scores[other_player] = 26;
+            }
+            return win_player;
+        }
+        else if (scores[win_player] > 0)  // 1 to 25 points
+            return -1;  // no one shot the moon
+    }
 }
 
 void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const

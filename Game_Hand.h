@@ -55,7 +55,7 @@ public:
     void reset_trick();
     void play_card(const Card& card);  // TODO: return hearts broken (for UI)
     void end_trick();  // TODO: returns who took the trick? (for UI)
-    void end_hand();  // shoot the moon points
+    int end_hand();  // returns who shot the moon, -1 if no one shot the moon
 
     // rules
     void find_valid_choices(std::vector<Card>& valid_choices) const;
