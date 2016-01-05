@@ -140,7 +140,7 @@ void Gui::load_images(int* cards_finished)
     arrow_texture.display();
 
     arrow_sprite.setTexture(arrow_texture.getTexture());
-    arrow_sprite.setPosition(window.getSize().x / 2 - arrow_size / 2, window.getSize().y / 2 - arrow_size / 2);
+    arrow_sprite.setOrigin(arrow_size / 2, arrow_size / 2);
 }
 
 void Gui::load_screen(int* cards_finished)
@@ -187,6 +187,37 @@ void Gui::load_screen(int* cards_finished)
     // TODO: file open error (*cards_finished == -1)
 }
 
+void Gui::play_ai_wrapper(Card* to_play)
+{
+    // AI here
+    *to_play = game.hand.static_play_ai();
+}
+
+void Gui::pause_wait_for_click(const float& seconds)
+{
+    // show screen for 1 second or until user clicks
+    sf::Clock clock;
+    bool user_clicked = false;
+
+    while (window.isOpen() && (! user_clicked) && (clock.getElapsedTime().asSeconds() < seconds))
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            else if (event.type == sf::Event::MouseButtonReleased)
+                user_clicked = true;
+            // else if other events (not mouse button release or close)
+        }
+
+        window.clear();
+        screen_sprite.setTexture(screen_texture.getTexture());
+        window.draw(screen_sprite);
+        window.display();
+    }
+}
+
 void Gui::show_game_scores() const
 {
     std::cout << "  Game Scores:  " << game.get_score(0) << "  "
@@ -219,14 +250,17 @@ void Gui::show_played_cards()
             {
             case 0:
                 draw_card(cards[i], base_location.x, base_location.y);
+                break;
             case 1:
                 draw_card(cards[i],
                           base_location.x - card_sprites[0][2].getGlobalBounds().width * 21 / 20,
                           base_location.y - card_sprites[0][2].getGlobalBounds().height *21 / 40);
+                break;
             case 2:
                 draw_card(cards[i],
                           base_location.x,
                           base_location.y - card_sprites[0][2].getGlobalBounds().height * 21 / 20);
+                break;
             case 3:
                 draw_card(cards[i],
                           base_location.x + card_sprites[0][2].getGlobalBounds().width * 21 / 20,
@@ -255,7 +289,7 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
             draw_card(*itr, x_position, hand_y_position - card_sprites[0][2].getGlobalBounds().height / 5);
         x_position += width_of_card_space;
 
-        std::cout << "drawing a card at " << x_position << ' ' << hand_y_position << std::endl;
+        // std::cout << "drawing a card at " << x_position << ' ' << hand_y_position << std::endl;
 
         ++index;
     }
@@ -278,7 +312,7 @@ void Gui::turn_screen_draw()
     screen_texture.clear(bg_color);
     show_game_scores();
     show_hand_scores();
-    show_hand(game.hand.get_hands()[game.hand.get_whose_turn()]);
+    show_hand(game.hand.get_hands()[0]);  // show player 0 human cards
     show_played_cards();
     screen_texture.display();
 }
@@ -291,6 +325,8 @@ void Gui::draw_card(const Card& card, float x, float y)
 
 void Gui::draw_direction()
 {
+    arrow_sprite.setRotation((game.get_passing_direction() - 1) * 90);
+    arrow_sprite.setPosition(window.getSize().x / 2, window.getSize().y / 2);
     screen_texture.draw(arrow_sprite);
 }
 
@@ -457,10 +493,7 @@ void Gui::pass()
                             }
                         }
                         // else click not in card y
-                        else if (event.mouseButton.y >= arrow_sprite.getPosition().y &&
-                                 event.mouseButton.y < (arrow_sprite.getPosition().y + arrow_sprite.getGlobalBounds().height) &&
-                                 event.mouseButton.x >= arrow_sprite.getPosition().x &&
-                                 event.mouseButton.x < (arrow_sprite.getPosition().x + arrow_sprite.getGlobalBounds().width) &&
+                        else if (arrow_sprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y) &&
                                  indices_to_pass.size() == 3)
                         {
                             std::cout << "clicked on arrow\n";
@@ -470,7 +503,7 @@ void Gui::pass()
                                 cards_to_pass[player_passing].push_back(game.hand.get_hands()[player_passing].at(*itr));
                             }
                         }
-                        // else other mouse clicks (not card or middle)
+                        // else other mouse clicks (not card or arrow)
                     }
                     // else if other events (not mouse button release or close)
                 }
@@ -524,12 +557,22 @@ void Gui::computer_turn()
 
     game.hand.find_valid_choices(valid_choices);
 
-    // TODO: send AI thread off while showing the screen (previously played cards) for 1 second
-    // don't close the window until human's turn
-    // AI here
-    to_play = game.hand.static_play_ai();
-    // to_play = valid_choices[rand() % valid_choices.size()];
+    if (! window.isOpen())  // if window is closed, don't show plays or do any extra waiting
+    {
+        // AI here
+        to_play = game.hand.static_play_ai();
+        // to_play = valid_choices[rand() % valid_choices.size()];
+    }
+    else  // window is open
+    {
+        // start ai thread
+        std::thread ai_thread(&Gui::play_ai_wrapper, this, &to_play);
 
+        turn_screen_draw();
+        pause_wait_for_click(1);
+
+        ai_thread.join();
+    }
     std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.get_value() << ' ' << to_play.get_suit() << std::endl;
     game.hand.play_card(to_play);
 }
@@ -668,6 +711,9 @@ void Gui::play()
                 computer_turn();
             }
             // end trick
+            turn_screen_draw();
+            pause_wait_for_click(1);
+
             game.hand.end_trick();
             show_hand_scores();
             std::cout << std::endl;
@@ -704,75 +750,5 @@ void Gui::play()
             }
         }
     }
-
-
-    /* Text_UI
-    game.game_reset();
-    while (game.get_winners().empty())
-    {
-        game.hand.reset_hand();
-        game.hand.deal_hands();
-
-        show_game_scores();
-
-        // passing
-        if (game.get_passing_direction())
-        {
-            for (int player_passing = 0; player_passing < PLAYER_COUNT; ++player_passing)
-            {
-                if (! game.hand.is_human(player_passing))
-                {
-                    std::vector<Card> to_pass = game.hand.get_hands()[player_passing].pick_random(3);
-                    game.hand.pass(player_passing, (player_passing+game.get_passing_direction())%PLAYER_COUNT, to_pass);
-                }
-                else  // is human
-                {
-                    show_hand(game.hand.get_hands()[player_passing]);
-                    game.hand.pass(player_passing,
-                                   (player_passing+game.get_passing_direction())%PLAYER_COUNT,
-                                   input_passing_choices(game.hand.get_hands()[player_passing]));
-                }
-            }
-            game.hand.receive_passed_cards();
-        }
-        // passing done
-
-        // play
-        for (int tricks = 13; tricks > 0; --tricks)
-        {
-            game.hand.reset_trick();
-            while (game.hand.turns_left_in_trick())
-            {
-                if (! game.hand.is_human(game.hand.get_whose_turn()))
-                {
-                    std::vector<Card> valid_choices;
-                    Card to_play;
-
-                    game.hand.find_valid_choices(valid_choices);
-
-                    // AI here
-                    to_play = game.hand.static_play_ai();
-                    // to_play = valid_choices[rand() % valid_choices.size()];
-
-                    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.get_value() << ' ' << to_play.get_suit() << std::endl;
-                    game.hand.play_card(to_play);
-                }
-                else  // is human
-                {
-                    show_hand(game.hand.get_hands()[game.hand.get_whose_turn()]);
-                    Card to_play = input_play_choice(game.hand.get_hands()[game.hand.get_whose_turn()]);
-                    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.get_value() << ' ' << to_play.get_suit() << std::endl;
-                    game.hand.play_card(to_play);
-                }
-            }
-            game.hand.end_trick();
-            show_hand_scores();
-            std::cout << std::endl;
-            game.change_passing();
-        }
-        game.hand.end_hand();
-        game.end_hand();
-    }
-    show_game_scores();
-    */
+    // window closed
 }

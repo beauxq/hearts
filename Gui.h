@@ -40,6 +40,8 @@ private:
     void load();
     void load_images(int* cards_finished);
     void load_screen(int* cards_finished);
+    void play_ai_wrapper(Card* to_play);
+    void pause_wait_for_click(const float& seconds);
 
     Game game;
 

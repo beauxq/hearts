@@ -2,6 +2,7 @@
 
 #include <set>
 #include <vector>
+#include <iostream>  // just for debugging  TODO: remove include
 
 #include "Card.h"
 #include "Deck.h"
@@ -30,11 +31,14 @@ Game_Hand::Game_Hand() :
 
 const std::vector<Card>& Game_Hand::get_played_cards()
 {
+    // std::cout << "get_played_cards: whose_turn = " << whose_turn << std::endl;
     // put null cards where cards haven't been played
     int player = whose_turn;
     for (int handled = played_card_count; handled < PLAYER_COUNT; ++handled)
     {
+        // std::cout << "putting null at " << player << std::endl;
         played_cards[player] = Card();
+        // std::cout << "value there: " << played_cards[player].get_value() << std::endl;
         player = (player + 1) % PLAYER_COUNT;
     }
 
