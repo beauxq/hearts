@@ -524,7 +524,7 @@ void Gui::pass()
 
                 // check 3 AI players
                 all_players_passed = true;
-                for (int i = 0; i < 3; ++i)
+                for (int i = 3; i > 0; --i)
                     if (cards_to_pass[i].size() < 3)
                         all_players_passed = false;
 
@@ -536,18 +536,21 @@ void Gui::pass()
     for (auto itr = threads.begin(); itr != threads.end(); ++itr)
         itr->join();
 
-    // pass the chosen cards
-    for (int player_passing = 0; player_passing < PLAYER_COUNT; ++player_passing)
+    if (window.isOpen())  // skip this if user closed the window
     {
-        game.hand.pass(player_passing,
-                       (player_passing + game.get_passing_direction()) % PLAYER_COUNT,
-                       cards_to_pass[player_passing]);
+        // pass the chosen cards
+        for (int player_passing = 0; player_passing < PLAYER_COUNT; ++player_passing)
+        {
+            game.hand.pass(player_passing,
+                           (player_passing + game.get_passing_direction()) % PLAYER_COUNT,
+                           cards_to_pass[player_passing]);
+        }
+
+        // pick up passed cards
+        game.hand.receive_passed_cards();
+
+        // TODO: show the passed cards for 2? seconds?
     }
-
-    // pick up passed cards
-    game.hand.receive_passed_cards();
-
-    // TODO: show the passed cards for 2? seconds?
 }
 
 void Gui::computer_turn()
@@ -690,13 +693,16 @@ void Gui::play()
 
             // passing is done, now play until a human's turn
             // (still part of the passing section until a human needs to play)
-            game.hand.reset_trick();
-
-            while (! game.hand.is_human(game.hand.get_whose_turn()))
+            if (window.isOpen())
             {
-                computer_turn();
+                game.hand.reset_trick();
+
+                while (! game.hand.is_human(game.hand.get_whose_turn()))
+                {
+                    computer_turn();
+                }
+                // now is human turn
             }
-            // now is human turn
         }
         else  // passing is done, human's turn to play
         {
@@ -705,50 +711,59 @@ void Gui::play()
             std::cout << "entered human playing section\n";
             human_turn();
 
-            // play the rest of the trick (computers' turns)
-            while (game.hand.turns_left_in_trick())
+            // if the window is open, play until the next human's turn
+            if (window.isOpen())
             {
-                computer_turn();
-            }
-            // end trick
-            turn_screen_draw();
-            pause_wait_for_click(1);
-
-            game.hand.end_trick();
-            show_hand_scores();
-            std::cout << std::endl;
-            if (game.hand.get_hands()[0].size() > 0)  // more tricks to play
-            {
-                game.hand.reset_trick();
-                while (! game.hand.is_human(game.hand.get_whose_turn()))
+                // play the rest of the trick (computers' turns)
+                while (game.hand.turns_left_in_trick())
                 {
                     computer_turn();
                 }
-                // now is human turn
-            }
-            else  // end of hand
-            {
-                game.hand.end_hand();
-                game.end_hand();
-                game.change_passing();
+                // end trick
+                turn_screen_draw();
+                pause_wait_for_click(1);
 
-                // is game over?
-                if (game.get_winners().empty())  // not game over
+                game.hand.end_trick();
+                show_hand_scores();
+
+                if (game.hand.get_hands()[0].size() > 0)  // more tricks to play
                 {
-                    game.hand.reset_hand();
-                    game.hand.deal_hands();
+                    game.hand.reset_trick();
+                    while (! game.hand.is_human(game.hand.get_whose_turn()))
+                    {
+                        computer_turn();
+                    }
+                    // now is human turn
                 }
-                else  // there's a winner game over
+                else  // no more tricks to play, end of hand
                 {
-                    // show winner (don't wait for click before resetting game, when that if window closes, it is reset)
-                    std::cout << "winner: " << game.get_winners()[0] << std::endl;
-                    game.game_reset();
-                    game.hand.reset_hand();
-                    game.hand.deal_hands();
-                    // wait for click after resetting game
+                    game.hand.end_hand();
+                    game.end_hand();
+                    game.change_passing();
+
+                    // is game over?
+                    if (game.get_winners().empty())  // not game over
+                    {
+                        game.hand.reset_hand();
+                        game.hand.deal_hands();
+                    }
+                    else  // there's a winner, game over
+                    {
+                        // show winner (don't wait for click before resetting game, so that if window closes, it is reset)
+                        std::cout << "winner: " << game.get_winners()[0] << std::endl;  // TODO: show winning screen
+                        game.game_reset();
+                        game.hand.reset_hand();
+                        game.hand.deal_hands();
+                        // TODO: wait for click after resetting game
+                    }
                 }
-            }
-        }
+            }  // section that is only done if window is still open
+        }  // tricks section starting with human playing
     }
     // window closed
+    std::cout << "out of window open while loop\n";
+    // at this point, either:
+    // human needs to play a card: save game
+    // there are points in the game score and passing is not done: save game
+    // there are no points in the game score and passing is not done: don't save game
 }
