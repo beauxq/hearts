@@ -53,9 +53,10 @@ void Game_Hand::reset_hand()
         unknown_cards_for_player[i].fill();
         scores[i] = 0;
         passed_cards_to_player[i].clear();
-        pass_count = 0;
-        hearts_broken = false;
     }
+
+    pass_count = 0;
+    hearts_broken = false;
 }
 
 void Game_Hand::deal_hands()
