@@ -150,7 +150,7 @@ void Gui::load_screen(int* cards_finished)
     loading_message.setFont(font);
     loading_message.setString("loading images...");
     loading_message.setCharacterSize(48);
-    loading_message.setColor(sf::Color(80,160,0));
+    loading_message.setColor(text_color);
     loading_message.setPosition((window.getSize().x - loading_message.getLocalBounds().width) / 4,
                                 window.getSize().y / 4);
 
@@ -230,46 +230,41 @@ void Gui::show_hand_scores()
 {
     float bottom_score_y;
 
-    std::cout << "  Hand Scores:  " << game.hand.get_score(0) << "  "
-                                    << game.hand.get_score(1) << "  "
-                                    << game.hand.get_score(2) << "  "
-                                    << game.hand.get_score(3) << std::endl;
-
     // text
-    sf::Text scores_of_each_player;
-    scores_of_each_player.setFont(font);
-    scores_of_each_player.setCharacterSize(24);
-    scores_of_each_player.setColor(sf::Color(80,160,0));  // TODO: text color magic numbers
+    sf::Text score_of_each_player;
+    score_of_each_player.setFont(font);
+    score_of_each_player.setCharacterSize(window.getSize().y / 25);
+    score_of_each_player.setColor(text_color);  // TODO: text color magic numbers
 
     for (int i = 0; i < PLAYER_COUNT; ++i)
     {
-        scores_of_each_player.setString("game: " + std::to_string(game.get_score(i)) + "\nhand: " + std::to_string(game.hand.get_score(i)));
+        score_of_each_player.setString("game: " + std::to_string(game.get_score(i)) + "\nhand: " + std::to_string(game.hand.get_score(i)));
 
         bottom_score_y = window.getSize().y -
                          card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
-                         scores_of_each_player.getGlobalBounds().height;
+                         score_of_each_player.getGlobalBounds().height;
 
         switch (i)
         {
         case 0:  // bottom
-            scores_of_each_player.setPosition(window.getSize().x / 2 -
-                                              scores_of_each_player.getGlobalBounds().width / 2,
+            score_of_each_player.setPosition(window.getSize().x / 2 -
+                                              score_of_each_player.getGlobalBounds().width / 2,
                                               bottom_score_y);
             break;
         case 1:  // left
-            scores_of_each_player.setPosition(5, (bottom_score_y + 5) / 2);
+            score_of_each_player.setPosition(5, (bottom_score_y + 5) / 2);
             break;
         case 2:  // top
-            scores_of_each_player.setPosition(window.getSize().x / 2 -
-                                              scores_of_each_player.getGlobalBounds().width / 2, 5);
+            score_of_each_player.setPosition(window.getSize().x / 2 -
+                                              score_of_each_player.getGlobalBounds().width / 2, 5);
             break;
         case 3:  // right
-            scores_of_each_player.setPosition(window.getSize().x - 5 -
-                                              scores_of_each_player.getGlobalBounds().width,
+            score_of_each_player.setPosition(window.getSize().x - 5 -
+                                              score_of_each_player.getGlobalBounds().width,
                                               (bottom_score_y + 5) / 2);
         }
 
-        screen_texture.draw(scores_of_each_player);
+        screen_texture.draw(score_of_each_player);
     }
 }
 
@@ -337,7 +332,6 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
 void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
     screen_texture.clear(bg_color);
-    show_game_scores();
     show_hand_scores();
     show_hand(hand, indices_of_higher_cards);
     draw_direction();
@@ -349,7 +343,6 @@ void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indi
 void Gui::turn_screen_draw()
 {
     screen_texture.clear(bg_color);
-    show_game_scores();
     show_hand_scores();
     show_hand(game.hand.get_hands()[0]);  // show player 0 human cards
     show_played_cards();
@@ -701,9 +694,9 @@ void Gui::human_turn()
         window.display();
     }
     // window closed or valid card to play
-    // TODO: window close save game
 
-    game.hand.play_card(to_play);
+    if (window.isOpen())
+        game.hand.play_card(to_play);
 }
 
 void Gui::play()
@@ -801,6 +794,7 @@ void Gui::play()
     }
     // window closed
     std::cout << "out of window open while loop\n";
+    // TODO: Save game
     // at this point, either:
     // human needs to play a card: save game
     // there are points in the game score and passing is not done: save game

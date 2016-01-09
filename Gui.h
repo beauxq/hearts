@@ -14,6 +14,7 @@ const int X_DEFAULT_RESOLUTION = 800;
 const int Y_DEFAULT_RESOLUTION = 600;
 const std::string WINDOW_NAME("Hearts");
 const sf::Color DEFAULT_BG_COLOR(80, 0, 160);
+const sf::Color DEFAULT_TEXT_COLOR(90,180,0);
 
 class Gui
 {
@@ -23,6 +24,7 @@ private:
     sf::Sprite screen_sprite;
     sf::Font font;
     sf::Color bg_color;
+    sf::Color text_color;
 
     int hand_y_position;
     int width_of_card_space;
@@ -68,7 +70,8 @@ public:
         card_textures(SUIT_COUNT, std::vector<sf::Texture>(Deck::HIGH + 1)),
         card_sprites(SUIT_COUNT, std::vector<sf::Sprite>(Deck::HIGH + 1)),
         window(sf::VideoMode(x_resolution, y_resolution), WINDOW_NAME, sf::Style::Close),  // no resize allowed
-        bg_color(DEFAULT_BG_COLOR)
+        bg_color(DEFAULT_BG_COLOR),
+        text_color(DEFAULT_TEXT_COLOR)
     {
         window.setVerticalSyncEnabled(true);
         screen_texture.create(x_resolution, y_resolution);
