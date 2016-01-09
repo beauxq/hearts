@@ -248,20 +248,20 @@ void Gui::show_hand_scores()
         {
         case 0:  // bottom
             score_of_each_player.setPosition(window.getSize().x / 2 -
-                                              score_of_each_player.getGlobalBounds().width / 2,
-                                              bottom_score_y);
+                                             score_of_each_player.getGlobalBounds().width / 2,
+                                             bottom_score_y);
             break;
         case 1:  // left
             score_of_each_player.setPosition(5, (bottom_score_y + 5) / 2);
             break;
         case 2:  // top
             score_of_each_player.setPosition(window.getSize().x / 2 -
-                                              score_of_each_player.getGlobalBounds().width / 2, 5);
+                                             score_of_each_player.getGlobalBounds().width / 2, 5);
             break;
         case 3:  // right
             score_of_each_player.setPosition(window.getSize().x - 5 -
-                                              score_of_each_player.getGlobalBounds().width,
-                                              (bottom_score_y + 5) / 2);
+                                             score_of_each_player.getGlobalBounds().width,
+                                             (bottom_score_y + 5) / 2);
         }
 
         screen_texture.draw(score_of_each_player);
@@ -331,20 +331,44 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
 
 void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
+    sf::Text tip;
+    tip.setFont(font);
+    tip.setString("Choose three cards to pass to another player.");
+    tip.setCharacterSize(window.getSize().x / 53);
+    tip.setColor(text_color);
+    tip.setPosition(window.getSize().x -
+                        tip.getGlobalBounds().width - 5,
+                    window.getSize().y -
+                        card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
+                        tip.getGlobalBounds().height);
+
     screen_texture.clear(bg_color);
     show_hand_scores();
     show_hand(hand, indices_of_higher_cards);
+    screen_texture.draw(tip);
     draw_direction();
     screen_texture.display();
 
     std::cout << indices_of_higher_cards.size() << std::endl;
 }
 
-void Gui::turn_screen_draw()
+void Gui::turn_screen_draw(const std::string& rule)
 {
+    sf::Text rule_text;
+    rule_text.setFont(font);
+    rule_text.setString(rule);
+    rule_text.setCharacterSize(window.getSize().x / 53);
+    rule_text.setColor(text_color);
+    rule_text.setPosition(window.getSize().x -
+                            rule_text.getGlobalBounds().width - 5,
+                          window.getSize().y -
+                            card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
+                            rule_text.getGlobalBounds().height);
+
     screen_texture.clear(bg_color);
     show_hand_scores();
     show_hand(game.hand.get_hands()[0]);  // show player 0 human cards
+    screen_texture.draw(rule_text);
     show_played_cards();
     screen_texture.display();
 }
@@ -622,7 +646,9 @@ void Gui::human_turn()
     Card to_play;
 
     std::vector<Card> valid_choices;
+    std::string rule;
     game.hand.find_valid_choices(valid_choices);
+    game.hand.find_valid_choice_rule(rule);
     // this might seem inefficient because find_valid_choices iterates through the hand,
     // then we iterate through the hand again to match indices with the vector
     // but find_valid_choices is called a lot more than this UI function
@@ -677,7 +703,8 @@ void Gui::human_turn()
                         if (indices_of_valid_choices[which_card_index] == -1)  // illegal play
                         {
                             to_play = Card();  // 0 value
-                            std::cout << "That play is not allowed.\n";  // TODO: message on screen
+                            std::cout << rule << std::endl;
+                            turn_screen_draw(rule);
                         }
                         else  // legal play
                             to_play = valid_choices[indices_of_valid_choices[which_card_index]];

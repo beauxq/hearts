@@ -161,6 +161,9 @@ int Game_Hand::end_hand()
 void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
 {
     /*
+    Much of this code is copied to find_valid_choice_rule.
+    Keep the two functions in sync.
+
     O(n) for a function that will be called millions of times per game
     efficiency is important
     I made this chart trying to work out the best organization
@@ -304,6 +307,77 @@ void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
                 {
                     valid_choices.push_back(*itr);
                 }
+            }
+        }
+    }
+}
+
+void Game_Hand::find_valid_choice_rule(std::string& rule) const
+{
+    /*
+    Much of this code is copied from find_valid_choices.
+    Keep the two functions in sync.
+
+    It is put in two different places for efficiency.
+    find_valid_choices is called millions of times per game,
+    so I don't want to put more in it than has to be in it.
+    */
+    const std::string FOLLOW_SUIT_RULE("You must play the same suit that was led.");  // because it's used more than once
+
+    if (hands[whose_turn].size() == 13)  // first trick
+    {
+        if (played_card_count == 0)  // first player
+        {
+            rule = "The two of clubs must be played first.";  // two of clubs
+            return;  // nothing else
+        }
+        // not first player
+        if (hands[whose_turn].count(CLUBS))  // must match lead suit (clubs)
+        {
+            rule = FOLLOW_SUIT_RULE;
+        }
+        else  // don't have any to match lead suit
+        {
+            if (hands[whose_turn].contains_non_points())  // have non-points
+            {
+                rule = "Points are not allowed on the first trick.";
+            }
+            else  // no non-points (no match for lead suit)
+            {
+                // play anything
+            }
+        }
+    }
+    else  // not first trick
+    {
+        if (played_card_count == 0)  // first player
+        {
+            if (hearts_broken)  // hearts broken
+            {
+                // play anything
+            }
+            else  // hearts not broken
+            {
+                if (hands[whose_turn].count(HEARTS) == hands[whose_turn].size())  // only hearts in hand
+                {
+                    // play anything
+                }
+                else  // non-hearts in hand, hearts not allowed
+                {
+                    // anything from 3 other suits
+                    rule = "Hearts may not be led until they have been played.";
+                }
+            }
+        }
+        else  // not first player (and not first trick)
+        {
+            if (hands[whose_turn].count(played_cards[trick_leader].get_suit()))  // must match lead suit
+            {
+                rule = FOLLOW_SUIT_RULE;
+            }
+            else  // don't have matching suit
+            {
+                // play anything
             }
         }
     }

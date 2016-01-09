@@ -1,6 +1,7 @@
 #ifndef GAME_HAND_H_INCLUDED
 #define GAME_HAND_H_INCLUDED
 
+#include <string>
 #include <vector>
 
 #include "Deck.h"
@@ -59,6 +60,7 @@ public:
 
     // rules
     void find_valid_choices(std::vector<Card>& valid_choices) const;
+    void find_valid_choice_rule(std::string& rule) const;
 
     // AI
     Card static_play_ai();
