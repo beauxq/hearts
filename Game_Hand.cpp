@@ -141,8 +141,7 @@ int Game_Hand::end_hand()
 {
     /** @returns who shot the moon, -1 if no one shot the moon */
     // shoot the moon points
-    int win_player;  // to keep in scope after for loop
-    for (win_player = 0; win_player < PLAYER_COUNT; ++win_player)  // check if player got 26
+    for (int win_player = 0; win_player < PLAYER_COUNT; ++win_player)  // check if player got 26
     {
         if (scores[win_player] == 26)  // this player shot the moon
         {
@@ -203,13 +202,6 @@ void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
     first n  happens thousands of times more often than  first y
     hb is probably about equal y and n
     */
-
-    // bool found_non_points = false;
-    // bool found_non_hearts = false;
-    // bool found_lead_suit = false;
-    // bool points_allowed;
-    // bool hearts_allowed;
-    // bool non_lead_suit_allowed;
 
     // this might look long and messy, but I think it's the most efficient
     // here we go...
@@ -455,7 +447,7 @@ Card Game_Hand::static_play_ai()
                     }
                     else  // not spades
                     {
-                        return valid_choices[0];  // highest card
+                        return valid_choices[valid_choices.size() - 1];  // highest card
                     }
                 }
             }
