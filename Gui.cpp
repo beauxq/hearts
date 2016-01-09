@@ -632,7 +632,7 @@ void Gui::computer_turn()
 
         ai_thread.join();
     }
-    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.get_value() << ' ' << to_play.get_suit() << std::endl;
+    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.str() << std::endl;
     game.hand.play_card(to_play);
 }
 

@@ -1,6 +1,8 @@
 #ifndef CARD_H_INCLUDED
 #define CARD_H_INCLUDED
 
+#include <string>
+
 enum Suit { CLUBS, DIAMONDS, SPADES, HEARTS, SUIT_COUNT };
 
 // this class is essentially const
@@ -37,6 +39,7 @@ public:
     const Suit& get_suit() const { return suit; }
 
     // TODO: str() string representation of card? (would only be for testing and debugging)
+    const std::string str() const;
 };
 
 #endif // CARD_H_INCLUDED
