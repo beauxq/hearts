@@ -38,7 +38,8 @@ public:
     const int& get_value() const { return value; }
     const Suit& get_suit() const { return suit; }
 
-    // TODO: str() string representation of card? (would only be for testing and debugging)
+    /** string representation of card
+        only for testing and debugging? */
     const std::string str() const;
 };
 

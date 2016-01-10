@@ -67,11 +67,11 @@ private:
 
 public:
     Gui(const int& x_resolution = X_DEFAULT_RESOLUTION, const int& y_resolution = Y_DEFAULT_RESOLUTION) :
-        card_textures(SUIT_COUNT, std::vector<sf::Texture>(Deck::HIGH + 1)),
-        card_sprites(SUIT_COUNT, std::vector<sf::Sprite>(Deck::HIGH + 1)),
         window(sf::VideoMode(x_resolution, y_resolution), WINDOW_NAME, sf::Style::Close),  // no resize allowed
         bg_color(DEFAULT_BG_COLOR),
-        text_color(DEFAULT_TEXT_COLOR)
+        text_color(DEFAULT_TEXT_COLOR),
+        card_textures(SUIT_COUNT, std::vector<sf::Texture>(Deck::HIGH + 1)),
+        card_sprites(SUIT_COUNT, std::vector<sf::Sprite>(Deck::HIGH + 1))
     {
         window.setVerticalSyncEnabled(true);
         screen_texture.create(x_resolution, y_resolution);

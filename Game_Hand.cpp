@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <iostream>  // just for debugging  TODO: remove include
+#include <algorithm>  // std::find
 
 #include "Card.h"
 #include "Deck.h"
@@ -17,11 +18,261 @@ int Game_Hand::points_for(const Card& card) const
     return 0;
 }
 
+void Game_Hand::speculate_hands(const int& player_speculating, const int& passing_direction)
+{
+    /** replace hands with player's guess about the other players' hands
+        (so the computer doesn't cheat)
+        to be called in a simulation */
+    std::vector<Deck> speculated_hands(PLAYER_COUNT);
+    std::vector<int> space_remaining_in(PLAYER_COUNT);
+
+    // variables used for distributing cards:
+    std::vector<std::unordered_set<int> > hands_that_allow_suit;  // index is suit
+    std::unordered_set<int> non_full_hands;
+    std::vector<int> allow_suit_and_non_full;  // intersection of non-full-hands with hands that allow this suit
+
+    for (int i = 0; i < PLAYER_COUNT; ++i)
+    {
+        space_remaining_in[i] = hands[i].size();
+    }
+
+    // I know my own hand
+    space_remaining_in[whose_turn] = 0;
+
+    // cards I passed to someone
+    const int WHOM_I_PASSED_TO = (whose_turn + passing_direction) % PLAYER_COUNT;
+    space_remaining_in[WHOM_I_PASSED_TO] -= passed_cards_to_player[WHOM_I_PASSED_TO].size();
+
+    // prepare to distribute unknown cards
+    // which hands are not full
+    for (int player = 0; player < PLAYER_COUNT; ++player)
+    {
+        if (space_remaining_in[player] > 0)
+            non_full_hands.insert(player);
+    }
+    // which hands can hold which suits (exclude whose_turn, hand that is not speculated)
+    for (int suit = 0; suit < SUIT_COUNT; ++suit)
+    {
+        for (int player = 0; player < PLAYER_COUNT; ++player)
+        {
+            if (player_seen_void_in_suits[player].count(suit) == 0)
+                if (player != whose_turn)  // (exclude whose_turn, hand that is not speculated)
+                    hands_that_allow_suit[suit].insert(player);
+        }
+    }
+
+    // distribute unknown cards
+    /*
+    Algorithm for distributing unknown cards
+
+    For each card in the unknown cards: ( *this_card_itr "this card" )
+
+        If this card fits and is allowed in a number of hands > 0:
+            Choose one of those hands at random and put this card in that hand.
+
+        else (this card is not allowed in any hand that it fits in):
+            Make a list of suits that can go in hands that are not full. ( suits_allowed_in_non_full )
+            Make a list of cards of those suits that are in hands that this card is allowed in. ( possible_cards_to_swap )
+            If that 2nd list is length 0 (There are no cards of suits from the 1st list in the hand that allows the suit of this card):
+                ASSERT: (I don't have a formal proof for this, but I think it is true.)
+                        There is a 3rd hand that is not involved in the previously used hands in this algorithm.
+                        One hand is full and is the only one that allows this card.
+                        A second hand is the only one not full and doesn't allow this card or any card in the first hand.
+                        The 3rd hand is full and must allow some suit that is in the first hand and must have some suit that is allowed in the second hand.
+                Choose, at random, a card from the 3rd hand cards of suits that fit in the 2nd hand, and move that card to the 2nd hand.
+                Choose, at random, a card from the 1st hand cards of suits that fit in the 3rd hand, and move that card to the 3rd hand.
+                Put "this card" (finally) in the 1st hand.
+            else:
+                Choose a card randomly from that list, and move it to a random hand that is not full.
+                Put "this card" in a hand that allows it.
+    Next card.
+    */
+    for (auto this_card_itr = unknown_cards_for_player[whose_turn].begin();
+         this_card_itr != unknown_cards_for_player[whose_turn].end();
+         ++this_card_itr)
+    {
+        // intersection of non_full and allow suit
+        allow_suit_and_non_full.clear();
+        for (auto allow_itr = hands_that_allow_suit[this_card_itr->get_suit()].begin();
+             allow_itr != hands_that_allow_suit[this_card_itr->get_suit()].end();
+             ++allow_itr)
+        {
+            if (non_full_hands.count(*allow_itr))
+                allow_suit_and_non_full.push_back(*allow_itr);
+        }
+
+        if (allow_suit_and_non_full.size() > 0)
+        {
+            int which_player_to_give_this_card_to = allow_suit_and_non_full[rand() % allow_suit_and_non_full.size()];
+            speculated_hands[which_player_to_give_this_card_to].insert(*this_card_itr);
+            if (--space_remaining_in[which_player_to_give_this_card_to] == 0)  // decrement space remaining and see if it's full
+                non_full_hands.erase(which_player_to_give_this_card_to);  // now full
+        }
+        else  // there are no hands left that allow this suit and have space for this card
+        {
+            // so we have to do some swapping
+            // find which suits are allowed in non-full hands
+            std::unordered_set<int> suits_allowed_in_non_full;
+            for (auto non_full_itr = non_full_hands.begin(); non_full_itr != non_full_hands.end(); ++non_full_itr)
+            {
+                for (int suit = 0; suit < SUIT_COUNT; ++suit)
+                {
+                    if (hands_that_allow_suit[suit].count(*non_full_itr))
+                        suits_allowed_in_non_full.insert(suit);
+                }
+            }
+            // find possible cards to swap (out of those suits)
+            std::vector<Card> possible_cards_to_swap;
+            std::vector<int> which_hand_to_pull_that_card_from;
+            // go through the hands that "this card" is allowed in
+            for (auto allow_itr = hands_that_allow_suit[this_card_itr->get_suit()].begin();
+                 allow_itr != hands_that_allow_suit[this_card_itr->get_suit()].end();
+                 ++allow_itr)
+            {
+                // go through the cards in this hand
+                for (auto this_card_target_hand_itr = speculated_hands[*allow_itr].begin();
+                     this_card_target_hand_itr != speculated_hands[*allow_itr].end();
+                     ++this_card_target_hand_itr)
+                {
+                    // can this card go in a non-full hand?
+                    if (suits_allowed_in_non_full.count(this_card_target_hand_itr->get_suit()))
+                    {
+                        possible_cards_to_swap.push_back(*this_card_target_hand_itr);
+                        which_hand_to_pull_that_card_from.push_back(*allow_itr);
+                    }
+                }
+            }
+
+            if (possible_cards_to_swap.size() > 0)
+            {
+                // do the swap
+                int card_index_to_swap = rand() % possible_cards_to_swap.size();
+                // intersection of non_full and allow swap suit
+                std::vector<int> allow_swap_suit_and_non_full;
+                for (auto allow_itr = hands_that_allow_suit[possible_cards_to_swap[card_index_to_swap].get_suit()].begin();
+                     allow_itr != hands_that_allow_suit[possible_cards_to_swap[card_index_to_swap].get_suit()].end();
+                     ++allow_itr)
+                {
+                    if (non_full_hands.count(*allow_itr))
+                        allow_swap_suit_and_non_full.push_back(*allow_itr);
+                }
+
+                // assert allow_swap_suit_and_non_full.size() > 0  // TODO: remove (or set up debugging)
+                if (allow_swap_suit_and_non_full.size() == 0)
+                    std::cout << "ERROR: assertion fail, single swap, no place to put swap card\n";
+
+                int which_player_to_give_this_card_to = allow_swap_suit_and_non_full[rand() % allow_swap_suit_and_non_full.size()];
+                speculated_hands[which_player_to_give_this_card_to].insert(possible_cards_to_swap[card_index_to_swap]);
+                speculated_hands[which_hand_to_pull_that_card_from[card_index_to_swap]].erase(possible_cards_to_swap[card_index_to_swap]);
+                // and this card in the space that was made for it
+                speculated_hands[which_hand_to_pull_that_card_from[card_index_to_swap]].insert(*this_card_itr);
+                // only the size of the non-full hand changed
+                if (--space_remaining_in[which_player_to_give_this_card_to] == 0)  // decrement space remaining and see if it's full
+                    non_full_hands.erase(which_player_to_give_this_card_to);  // now full
+            }
+            else  // no single swap possible, double swap is needed
+            {
+                std::cout << "entering double swap scenario\n";
+                // assert: double swap is possible
+                /* questionable assertion:
+                    There is a 3rd hand that is not involved in the previously used hands in this algorithm.
+                    One hand is full and is the only one that allows *this_card_itr
+                    A second hand is the only one not full and doesn't allow this card or any card in the first hand.
+                    The 3rd hand is full and must allow some suit that is in the first hand
+                                         and must have some suit that is allowed in the second hand. */
+                int full_and_allows_this_card = *(hands_that_allow_suit[this_card_itr->get_suit()].begin());  // "1st hand"
+                int non_full_hand = *(non_full_hands.begin());  // "2nd hand" suits_allowed_in_non_full
+                // which hand is third hand?
+                int third_hand = 0;
+                while ((third_hand == full_and_allows_this_card) ||  // first hand
+                       (third_hand == whose_turn) ||  // the hand we're not speculating
+                       (third_hand == non_full_hand))  // second hand
+                {
+                    ++third_hand;
+                }
+
+                // debugging assertions  // TODO: remove
+                if (hands_that_allow_suit[this_card_itr->get_suit()].size() != 1)
+                    std::cout << "ERROR: big assertion was wrong, hands that allow this suit != 1\n";  // !
+                if (non_full_hands.size() != 1)
+                    std::cout << "ERROR: big assertion was wrong, not exactly 1 non-full hand\n";
+
+                // go through third hand and find cards allowed in non-full hand
+                std::vector<Card> second_level_swap_possibilities;
+                for (auto third_hand_itr = speculated_hands[third_hand].begin();
+                     third_hand_itr != speculated_hands[third_hand].end();
+                     ++third_hand_itr)
+                {
+                    if (suits_allowed_in_non_full.count(third_hand_itr->get_suit()))
+                        second_level_swap_possibilities.push_back(*third_hand_itr);
+                }
+
+                // another of the debugging assertions  // TODO: remove
+                if (second_level_swap_possibilities.size() == 0)
+                    std::cout << "ERROR: big assertion was wrong, no cards to move from 3rd to 2nd\n";
+
+                // move one of those cards to the non-full hand
+                Card second_level_swap = second_level_swap_possibilities[rand() % second_level_swap_possibilities.size()];
+                speculated_hands[non_full_hand].insert(second_level_swap);
+                speculated_hands[third_hand].erase(second_level_swap);
+                // change space remaining
+                if (--space_remaining_in[non_full_hand] == 0)  // decrement space remaining and see if it's full
+                    non_full_hands.erase(non_full_hand);  // now full (we're on the last card)
+
+                // which suits are allowed in the third hand?
+                std::unordered_set<int> suits_allowed_in_third_hand;
+                for (int suit = 0; suit < SUIT_COUNT; ++suit)
+                {
+                    if (player_seen_void_in_suits[third_hand].count(suit) == 0)  // then this suit is allowed
+                        suits_allowed_in_third_hand.insert(suit);
+                }
+
+                // find cards that can be moved from first hand to third hand
+                // possible_cards_to_swap is already declared from way before and is empty
+                for (auto first_hand_itr = speculated_hands[full_and_allows_this_card].begin();
+                     first_hand_itr != speculated_hands[full_and_allows_this_card].end();
+                     ++first_hand_itr)
+                {
+                    if (suits_allowed_in_third_hand.count(first_hand_itr->get_suit()))
+                        possible_cards_to_swap.push_back(*first_hand_itr);
+                }
+
+                // another of the debugging assertions  // TODO: remove
+                if (possible_cards_to_swap.size() == 0)
+                    std::cout << "ERROR: big assertion was wrong, no cards to move from 1st to 3rd\n";
+
+                // move one of those cards to the third hand
+                Card first_level_swap = possible_cards_to_swap[rand() % possible_cards_to_swap.size()];
+                speculated_hands[third_hand].insert(first_level_swap);
+                speculated_hands[full_and_allows_this_card].erase(first_level_swap);
+                // so now it's not full and has space for this card
+                // (it will be full right after inserting this card, so don't change space remaining)
+
+                // Now, finally, we can get rid of this card
+                speculated_hands[full_and_allows_this_card].insert(*this_card_itr);
+            }  // done with double swap
+        }  // done with any swapping
+    }  // next card
+
+    // put in the cards that I already knew
+    speculated_hands[whose_turn] = hands[whose_turn];
+    for (auto itr = passed_cards_to_player[WHOM_I_PASSED_TO].begin();
+         itr != passed_cards_to_player[WHOM_I_PASSED_TO].end();
+         ++itr)
+    {
+        speculated_hands[WHOM_I_PASSED_TO].insert(*itr);
+    }
+
+    // replace real hands with speculated hands
+    hands = speculated_hands;
+}
+
 Game_Hand::Game_Hand() :
     hands(PLAYER_COUNT),
-    unknown_cards_for_player(PLAYER_COUNT, true),
     passed_cards_to_player(PLAYER_COUNT),
-    played_cards(PLAYER_COUNT)
+    played_cards(PLAYER_COUNT),
+    this_is_simulation(false),
+    unknown_cards_for_player(PLAYER_COUNT, true)
 {
     for (int i = 0; i < PLAYER_COUNT; ++i)
     {
@@ -53,6 +304,7 @@ void Game_Hand::reset_hand()
         unknown_cards_for_player[i].fill();
         scores[i] = 0;
         passed_cards_to_player[i].clear();
+        player_seen_void_in_suits[i].clear();
     }
 
     pass_count = 0;
@@ -95,7 +347,7 @@ void Game_Hand::receive_passed_cards()
         for (auto itr = passed_cards_to_player[i].begin(); itr != passed_cards_to_player[i].end(); ++itr)
         {
             hands[i].insert(*itr);
-            // TODO: remove from unknown cards
+            unknown_cards_for_player[i].erase(*itr);  // remove from unknown cards
 
             if (*itr == STARTING_CARD)
                 whose_turn = i;
@@ -111,11 +363,27 @@ void Game_Hand::reset_trick()
 
 void Game_Hand::play_card(const Card& card)
 {
-    // TODO: remove from unknown cards of all players
-
     hands[whose_turn].erase(card);
     played_cards[whose_turn] = card;
     ++played_card_count;
+
+    if (! this_is_simulation)
+    {
+        // remove from unknown cards of all players
+        for (int player = 0; player < PLAYER_COUNT; ++player)
+        {
+            unknown_cards_for_player[player].erase(card);
+        }
+        // remove from passed cards (AI players remembering what cards they passed)
+        auto position = std::find(passed_cards_to_player[whose_turn].begin(),
+                                  passed_cards_to_player[whose_turn].end(),
+                                  card);
+        if (position != passed_cards_to_player[whose_turn].end())
+            passed_cards_to_player[whose_turn].erase(position);
+        // is this player showing that they have none of a suit?
+        if (card.get_suit() != played_cards[trick_leader].get_suit())
+            player_seen_void_in_suits[whose_turn].insert(played_cards[trick_leader].get_suit());
+    }
 
     if (card.beats_in_suit_of(played_cards[trick_leader]))
         trick_leader = whose_turn;
@@ -156,6 +424,8 @@ int Game_Hand::end_hand()
         else if (scores[win_player] > 0)  // 1 to 25 points
             return -1;  // no one shot the moon
     }
+    std::cerr << "invalid scores at the end of a hand\n";
+    return -2;
 }
 
 void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
@@ -484,7 +754,7 @@ Card Game_Hand::static_play_ai()
                 Suit suit_of_the_highest_lowest_card_of_its_suit = valid_choices[0].get_suit();
                 int lowest_value_in_that_suit = valid_choices[0].get_value();
 
-                for (int i = 1; i < valid_choices.size(); ++i)
+                for (unsigned int i = 1; i < valid_choices.size(); ++i)
                 {
                     if (valid_choices[i].get_suit() != suit_currently_looking_through)  // moved into a new suit
                     {
@@ -509,7 +779,7 @@ Card Game_Hand::static_play_ai()
     else  // I lead
     {
         bool found_non_high_spade = false;
-        for (int i = 0; i < valid_choices.size(); ++i)
+        for (unsigned int i = 0; i < valid_choices.size(); ++i)
         {
             if (valid_choices[i].get_value() < 12 || valid_choices[i].get_suit() != SPADES)  // found non "high spade"
             {
@@ -537,6 +807,7 @@ Card Game_Hand::static_play_ai()
         }
 
     }
+    return Card();  // just to avoid warning message about control reaching end of non-void function
     /* this strategy in Python:
         if must_choose_trick_suit:  # I'm not leading the trick
             # see if I can avoid taking it

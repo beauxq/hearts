@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 #include "Deck.h"
 #include "Card.h"
@@ -14,12 +15,14 @@ class Game_Hand
 {
 private:
     std::vector<Deck> hands;
-    std::vector<Deck> unknown_cards_for_player;  // for AI
+
     bool player_is_human[PLAYER_COUNT];
 
     int scores[PLAYER_COUNT];
 
     std::vector<std::vector<Card> > passed_cards_to_player;  // first index is player passed to
+    // passed_cards_to_player is also used by AI for players to remember what cards they passed, and to whom
+    // (so cards are removed from this when they are played)
     int pass_count;  // how many players have passed
 
     // trick
@@ -32,6 +35,17 @@ private:
 
     int points_for(const Card& card) const;
 
+    // for AI
+    bool this_is_simulation;
+    std::vector<Deck> unknown_cards_for_player;  // cards that the player doesn't know the location of
+    std::unordered_set<int> player_seen_void_in_suits[PLAYER_COUNT];  // index is player
+    // when a player shows that they have none of a suit, that suit is added to their set here
+    // int is Suit, but there is no hash function for enumeration Suit
+
+    /** replace hands with player's guess about what the other players' hands are
+        (so the computer doesn't cheat)
+        to be called in a simulation */
+    void speculate_hands(const int& player_speculating, const int& passing_direction);
 public:
     Game_Hand();
 

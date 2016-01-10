@@ -519,7 +519,7 @@ void Gui::pass()
                                 x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
                             {
                                 which_card_index = x_position_in_hand / width_of_card_space;
-                                if (which_card_index >= game.hand.get_hands()[player_passing].size())
+                                if (which_card_index >= (int)game.hand.get_hands()[player_passing].size())
                                     which_card_index = -1;
                             }
                             if (which_card_index >= 0)
@@ -695,7 +695,7 @@ void Gui::human_turn()
                         x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
                     {
                         which_card_index = x_position_in_hand / width_of_card_space;
-                        if (which_card_index >= game.hand.get_hands()[game.hand.get_whose_turn()].size())
+                        if (which_card_index >= (int)game.hand.get_hands()[game.hand.get_whose_turn()].size())
                             which_card_index = -1;
                     }
                     if (which_card_index >= 0)

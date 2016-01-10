@@ -79,7 +79,7 @@ public:
     void fill();
 
     /** @returns the number of cards of the specified suit */
-    const size_t& count(const Suit& suit) const { return cards[suit].size(); }
+    const size_t count(const Suit& suit) const { return cards[suit].size(); }
 
     const Card& at(int index) const;
 
