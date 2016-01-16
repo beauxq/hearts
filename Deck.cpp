@@ -73,7 +73,9 @@ void Deck::change_sort(const std::vector<Suit>& suits_in_order)
 void Deck::erase(const Card& card_to_remove)
 {
     if (cards[card_to_remove.get_suit()].erase(card_to_remove))  // TODO: does this remove the right card (after order change)?
+    {
         --card_count;
+    }
 }
 
 Card Deck::deal_one()

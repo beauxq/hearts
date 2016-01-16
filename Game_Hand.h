@@ -11,6 +11,9 @@
 const int PLAYER_COUNT = 4;
 const Card STARTING_CARD(2, CLUBS);
 
+const int AI_LEVEL = 20000;  // how smart the AI is ( ~ number of simulated tricks)
+// this number should be tuned so that the time test in Gui::play_ai_wrapper is about .5 on a slow computer
+
 class Game_Hand
 {
 private:
@@ -36,6 +39,8 @@ private:
     int points_for(const Card& card) const;
 
     // for AI
+    bool points_played_this_trick;
+    bool shoot_moon_possible;
     bool this_is_simulation;
     std::vector<Deck> unknown_cards_for_player;  // cards that the player doesn't know the location of
     std::unordered_set<int> player_seen_void_in_suits[PLAYER_COUNT];  // index is player
@@ -45,7 +50,7 @@ private:
     /** replace hands with player's guess about what the other players' hands are
         (so the computer doesn't cheat)
         to be called in a simulation */
-    void speculate_hands(const int& player_speculating, const int& passing_direction);
+    void speculate_hands(const int& passing_direction);
 public:
     Game_Hand();
 
@@ -58,6 +63,7 @@ public:
     const bool& hearts_is_broken() const { return hearts_broken; }
     const int& get_pass_count() const { return pass_count; }
     const std::vector<Card>& get_played_cards();  // first put null cards where cards haven't been played
+    const bool& possible_to_shoot_moon() const { return shoot_moon_possible; }
 
     // setter
     void set_pass_count() { pass_count = PLAYER_COUNT; }  // to be called on the keeper hand to say we've already passed
@@ -78,7 +84,8 @@ public:
 
     // AI
     Card static_play_ai();
-    Card dynamic_play_ai();
+    Card dynamic_play_ai(const int& passing_direction);
+    Card simulation_play_ai();  // used in simulation (inside dynamic_play_ai), static or more random if it's possible to shoot the moon
     std::vector<Card> pass_ai(const int& from_player);
 };
 

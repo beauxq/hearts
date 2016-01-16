@@ -18,7 +18,7 @@ int Game_Hand::points_for(const Card& card) const
     return 0;
 }
 
-void Game_Hand::speculate_hands(const int& player_speculating, const int& passing_direction)
+void Game_Hand::speculate_hands(const int& passing_direction)
 {
     /** replace hands with player's guess about the other players' hands
         (so the computer doesn't cheat)
@@ -27,7 +27,7 @@ void Game_Hand::speculate_hands(const int& player_speculating, const int& passin
     std::vector<int> space_remaining_in(PLAYER_COUNT);
 
     // variables used for distributing cards:
-    std::vector<std::unordered_set<int> > hands_that_allow_suit;  // index is suit
+    std::vector<std::unordered_set<int> > hands_that_allow_suit(SUIT_COUNT);  // index is suit  // TODO
     std::unordered_set<int> non_full_hands;
     std::vector<int> allow_suit_and_non_full;  // intersection of non-full-hands with hands that allow this suit
 
@@ -50,17 +50,44 @@ void Game_Hand::speculate_hands(const int& player_speculating, const int& passin
         if (space_remaining_in[player] > 0)
             non_full_hands.insert(player);
     }
+
     // which hands can hold which suits (exclude whose_turn, hand that is not speculated)
     for (int suit = 0; suit < SUIT_COUNT; ++suit)
     {
         for (int player = 0; player < PLAYER_COUNT; ++player)
         {
             if (player_seen_void_in_suits[player].count(suit) == 0)
+            {
                 if (player != whose_turn)  // (exclude whose_turn, hand that is not speculated)
+                {
                     hands_that_allow_suit[suit].insert(player);
-        }
-    }
-
+                }
+            }
+            /*
+            else  // player is void in suit TODO: this else is just for testing, remove
+            {
+                if (player != whose_turn)  // (exclude whose_turn, hand that is not speculated)
+                {
+                    std::cout << "    player " << player << " has no ";
+                    switch (suit)
+                    {
+                    case CLUBS:
+                        std::cout << "clubs\n";
+                        break;
+                    case DIAMONDS:
+                        std::cout << "diamonds\n";
+                        break;
+                    case SPADES:
+                        std::cout << "spades\n";
+                        break;
+                    case HEARTS:
+                        std::cout << "hearts\n";
+                    }
+                }
+            }
+            */
+        }  // players
+    }  // suits
     // distribute unknown cards
     /*
     Algorithm for distributing unknown cards
@@ -172,7 +199,7 @@ void Game_Hand::speculate_hands(const int& player_speculating, const int& passin
             }
             else  // no single swap possible, double swap is needed
             {
-                std::cout << "entering double swap scenario\n";
+                // std::cout << "entering double swap scenario\n";
                 // assert: double swap is possible
                 /* questionable assertion:
                     There is a 3rd hand that is not involved in the previously used hands in this algorithm.
@@ -271,6 +298,8 @@ Game_Hand::Game_Hand() :
     hands(PLAYER_COUNT),
     passed_cards_to_player(PLAYER_COUNT),
     played_cards(PLAYER_COUNT),
+    points_played_this_trick(false),
+    shoot_moon_possible(true),
     this_is_simulation(false),
     unknown_cards_for_player(PLAYER_COUNT, true)
 {
@@ -309,6 +338,7 @@ void Game_Hand::reset_hand()
 
     pass_count = 0;
     hearts_broken = false;
+    shoot_moon_possible = true;
 }
 
 void Game_Hand::deal_hands()
@@ -359,6 +389,7 @@ void Game_Hand::reset_trick()
 {
     played_card_count = 0;
     trick_leader = whose_turn;
+    points_played_this_trick = false;
 }
 
 void Game_Hand::play_card(const Card& card)
@@ -366,6 +397,8 @@ void Game_Hand::play_card(const Card& card)
     hands[whose_turn].erase(card);
     played_cards[whose_turn] = card;
     ++played_card_count;
+    if (! points_played_this_trick)
+        points_played_this_trick = points_for(card);
 
     if (! this_is_simulation)
     {
@@ -380,13 +413,75 @@ void Game_Hand::play_card(const Card& card)
                                   card);
         if (position != passed_cards_to_player[whose_turn].end())
             passed_cards_to_player[whose_turn].erase(position);
+
         // is this player showing that they have none of a suit?
         if (card.get_suit() != played_cards[trick_leader].get_suit())
             player_seen_void_in_suits[whose_turn].insert(played_cards[trick_leader].get_suit());
+
+        // is this player showing that they only have hearts left?
+        if ((card.get_suit() == HEARTS) &&
+            (played_card_count == 1) &&
+            (! hearts_broken))
+        {
+            player_seen_void_in_suits[whose_turn].insert(CLUBS);
+            player_seen_void_in_suits[whose_turn].insert(DIAMONDS);
+            player_seen_void_in_suits[whose_turn].insert(SPADES);
+        }
     }
 
     if (card.beats_in_suit_of(played_cards[trick_leader]))
         trick_leader = whose_turn;
+
+    // see if it's still possible to shoot the moon
+    if (shoot_moon_possible)
+    {
+        // find out if still possible
+        if (points_played_this_trick)
+        {
+            int player_with_non_zero_score = -1;
+            for (int player = 0; player < PLAYER_COUNT; ++player)
+            {
+                if (scores[player])
+                {
+                    player_with_non_zero_score = player;
+                    break;
+                }
+            }
+
+            if (player_with_non_zero_score > -1)
+            {
+                // see whether this player has played yet this trick
+                bool this_player_played = false;
+                int going_through_turns = (whose_turn + 5 - played_card_count) % PLAYER_COUNT;  // first turn this trick
+                for (int turn_count = played_card_count; turn_count > 0; --turn_count)
+                {
+                    if (going_through_turns == player_with_non_zero_score)
+                    {
+                        this_player_played = true;
+                        break;
+                    }
+                    going_through_turns = (going_through_turns + 1) % PLAYER_COUNT;
+                }
+
+                if (this_player_played)
+                {
+                    // this player can't take the trick?
+                    if (player_with_non_zero_score != trick_leader)
+                    {
+                        shoot_moon_possible = false;
+
+                        // TODO: remove - for testing
+                        if (! this_is_simulation)
+                            std::cout << "this is the point when it becomes impossible for anyone to shoot the moon\n";
+                    }
+                    // he is leading, still possible to shoot the moon
+                }
+                // else still possible to shoot the moon
+            }
+            // else still possible to shoot the moon
+        }
+        // else still possible to shoot the moon
+    }
 
     if (card.get_suit() == HEARTS)
         hearts_broken = true;  // TODO: alternate rule, queen of spades breaks hearts
@@ -808,6 +903,7 @@ Card Game_Hand::static_play_ai()
 
     }
     return Card();  // just to avoid warning message about control reaching end of non-void function
+
     /* this strategy in Python:
         if must_choose_trick_suit:  # I'm not leading the trick
             # see if I can avoid taking it
@@ -891,4 +987,95 @@ Card Game_Hand::static_play_ai()
 
         return answer
     */
+}
+
+Card Game_Hand::dynamic_play_ai(const int& passing_direction)
+{
+    std::vector<Card> valid_choices;
+    find_valid_choices(valid_choices);
+
+    // only one choice?
+    if (valid_choices.size() == 1)
+        return valid_choices[0];
+
+    std::vector<int> score_for_each_valid_choice(valid_choices.size(), 0);
+
+    int loop_count = (AI_LEVEL / valid_choices.size()) / hands[whose_turn].size();  // how many times we go through the valid choices
+
+    for (int i = loop_count; i > 0; --i)
+    {
+        for (size_t choice_index = 0; choice_index < valid_choices.size(); ++choice_index)  // index for both vectors (valid choices and scores for each)
+        {
+            Game_Hand simulation = *this;
+
+            simulation.this_is_simulation = true;
+            simulation.player_is_human[0] = false;
+
+            // tests to make sure arrays are copied correctly
+            // std::cout << "player_is_human[0] " << player_is_human[0] << std::endl;
+            // std::cout << "simulation.player_is_human[0] " << simulation.player_is_human[0] << std::endl;
+
+            simulation.speculate_hands(passing_direction);
+
+            // play the card we're checking now
+            simulation.play_card(valid_choices[choice_index]);  // changes simulation.whose_turn to someone else
+
+            do
+            {
+                // play the rest of the current trick
+                while (simulation.turns_left_in_trick())
+                {
+                    simulation.play_card(simulation.simulation_play_ai());
+                }
+                simulation.end_trick();
+
+                if (simulation.get_hands()[0].size() > 0)  // more tricks to play
+                {
+                    simulation.reset_trick();
+                }
+            } while (simulation.hands[0].size() > 0);  // until there are no more tricks left to play
+            simulation.end_hand();
+
+            score_for_each_valid_choice[choice_index] += simulation.scores[whose_turn];
+        }  // end valid choice loop
+    }  // end loop through valid choices multiple times according to AI_LEVEL
+
+    // simple min function
+    size_t index_of_min = 0;
+
+    // TODO: remove these cout only after much testing and fine tuning of the AI
+    std::cout << valid_choices[0].str() << "  " << (float)score_for_each_valid_choice[0] / loop_count << std::endl;
+    for (size_t index = 1; index < valid_choices.size(); ++index)
+    {
+        if (score_for_each_valid_choice[index] < score_for_each_valid_choice[index_of_min])
+        {
+            index_of_min = index;
+        }
+        std::cout << valid_choices[index].str() << "  " << (float)score_for_each_valid_choice[index] / loop_count << std::endl;
+    }
+
+    return valid_choices[index_of_min];
+}
+
+Card Game_Hand::simulation_play_ai()
+{
+    int random_if_less_than;  // play choice will be random if a rand()%10 < this
+
+    // TODO: I don't know a good way to tune these numbers
+    if (possible_to_shoot_moon())
+        random_if_less_than = 4;  // higher probability of playing a random card
+    else  // not possible to shoot the moon
+        random_if_less_than = 2;  // lower probability of playing a random card
+
+    if ((rand() % 10) < random_if_less_than)
+    {
+        std::vector<Card> valid_choices;
+        find_valid_choices(valid_choices);
+
+        return valid_choices[rand() % valid_choices.size()];
+    }
+    else  // static ai
+    {
+        return static_play_ai();
+    }
 }

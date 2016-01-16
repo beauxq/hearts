@@ -189,8 +189,11 @@ void Gui::load_screen(int* cards_finished)
 
 void Gui::play_ai_wrapper(Card* to_play)
 {
-    // AI here
-    *to_play = game.hand.static_play_ai();
+    // TODO: remove time test after lots of testing
+    sf::Clock clock;  // time test
+    *to_play = game.hand.dynamic_play_ai(game.get_passing_direction());
+    sf::Time time = clock.getElapsedTime();  // time test
+    std::cout << "  time to decide: " << time.asSeconds() << std::endl;
 }
 
 void Gui::pause_wait_for_click(const float& seconds)
@@ -611,28 +614,27 @@ void Gui::pass()
 
 void Gui::computer_turn()
 {
-    std::vector<Card> valid_choices;
+    // std::vector<Card> valid_choices;
     Card to_play;
 
-    game.hand.find_valid_choices(valid_choices);
+    // game.hand.find_valid_choices(valid_choices);
 
-    if (! window.isOpen())  // if window is closed, don't show plays or do any extra waiting
-    {
-        // AI here
-        to_play = game.hand.static_play_ai();
-        // to_play = valid_choices[rand() % valid_choices.size()];
-    }
-    else  // window is open
+    if (window.isOpen())  // if window is closed, don't show plays or do any extra waiting
     {
         // start ai thread
         std::thread ai_thread(&Gui::play_ai_wrapper, this, &to_play);
+        //play_ai_wrapper(&to_play);  // test without thread
 
         turn_screen_draw();
         pause_wait_for_click(1);
 
         ai_thread.join();
     }
-    std::cout << "player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.str() << std::endl;
+    else  // window closed
+    {
+        play_ai_wrapper(&to_play);
+    }
+    std::cout << "           player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.str() << std::endl;
     game.hand.play_card(to_play);
 }
 

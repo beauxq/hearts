@@ -42,6 +42,12 @@ void test_game()
     a.play_test();
 }
 
+void dynamic_ai_test()
+{
+    Game_Hand hand;
+    hand.dynamic_play_ai(0);
+}
+
 void test_some_inside_stuff()
 {
     // test
