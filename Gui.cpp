@@ -40,6 +40,83 @@ void Gui::load()
 void Gui::load_images(int* cards_finished)
 {
     // these numbers from data files (positions and sizes of cards)
+    const float X_OFFSET = 205.841;
+    const float X_COL = 263.24;
+    const int X_SIZE = 224;
+    const int Y_SIZE = 312;
+
+    const int Y_CLUB = 1093;
+    const int Y_DIAMOND = 2149;
+    const int Y_SPADE = 1797;
+    const int Y_HEART = 1445;
+
+    const std::string FILENAME = "resources/Color_52_Faces_v.2.0.png";
+    sf::Image file;
+    file.loadFromFile(FILENAME);
+
+    // rect parameters
+    int x, y;
+
+    for (int suit = 0; suit < SUIT_COUNT; ++suit)
+    {
+        for (int value = Deck::LOW; value <= Deck::HIGH; ++value)
+        {
+            // don't bother to finish loading if the user closes the window
+            if (! window.isOpen())
+            {
+                return;
+            }
+
+            // y coordinate
+            switch (suit)
+            {
+            case CLUBS:
+                y = Y_CLUB;
+                break;
+            case DIAMONDS:
+                y = Y_DIAMOND;
+                break;
+            case SPADES:
+                y = Y_SPADE;
+                break;
+            case HEARTS:
+                y = Y_HEART;
+                break;
+            default:
+                ; // wha...  !?
+            }
+
+            // x coordinate
+            if (value == 14)  // ace
+            {
+                x = X_OFFSET + X_COL;
+            }
+            else  // 2-13
+            {
+                x = X_OFFSET + (X_COL * value);
+            }
+
+            // load
+            if (! card_textures[suit][value].loadFromImage(file, sf::IntRect(x, y, X_SIZE, Y_SIZE)))
+            {
+                *cards_finished = -1;  // error
+                return;
+            }
+
+            card_sprites[suit][value].setTexture(card_textures[suit][value]);
+            card_sprites[suit][value].setScale(2 * float(window.getSize().x) / Deck::HIGH / X_SIZE,
+                                               2 * float(window.getSize().x) / Deck::HIGH / X_SIZE);
+
+            ++*cards_finished;
+        }
+    }
+
+    make_arrow();
+}
+
+void Gui::load_images_alt(int* cards_finished)
+{
+    // these numbers from data files (positions and sizes of cards)
     const int X_OFFSET = 8;
     const int Y_OFFSET = 6;
     const int X_COL = 328;
@@ -117,6 +194,11 @@ void Gui::load_images(int* cards_finished)
         }
     }
 
+    make_arrow();
+}
+
+void Gui::make_arrow()
+{
     const int arrow_size = 40;
 
     arrow_texture.create(arrow_size, arrow_size);
@@ -243,28 +325,30 @@ void Gui::show_hand_scores()
     {
         score_of_each_player.setString("game: " + std::to_string(game.get_score(i)) + "\nhand: " + std::to_string(game.hand.get_score(i)));
 
-        bottom_score_y = window.getSize().y -
-                         card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
-                         score_of_each_player.getGlobalBounds().height;
+        bottom_score_y = hand_y_position -
+                         card_sprites[0][2].getGlobalBounds().height / 5 -
+                         score_of_each_player.getGlobalBounds().height -
+                         PADDING * 2;
 
         switch (i)
         {
         case 0:  // bottom
-            score_of_each_player.setPosition(window.getSize().x / 2 -
-                                             score_of_each_player.getGlobalBounds().width / 2,
+            score_of_each_player.setPosition((window.getSize().x - score_of_each_player.getGlobalBounds().width) / 2 -
+                                             card_sprites[0][2].getGlobalBounds().width,
                                              bottom_score_y);
             break;
         case 1:  // left
-            score_of_each_player.setPosition(5, (bottom_score_y + 5) / 2);
+            score_of_each_player.setPosition(PADDING, (bottom_score_y + PADDING) / 4);
             break;
         case 2:  // top
-            score_of_each_player.setPosition(window.getSize().x / 2 -
-                                             score_of_each_player.getGlobalBounds().width / 2, 5);
+            score_of_each_player.setPosition((window.getSize().x - score_of_each_player.getGlobalBounds().width) / 2 +
+                                             card_sprites[0][2].getGlobalBounds().width,
+                                             PADDING);
             break;
         case 3:  // right
-            score_of_each_player.setPosition(window.getSize().x - 5 -
+            score_of_each_player.setPosition(window.getSize().x - PADDING -
                                              score_of_each_player.getGlobalBounds().width,
-                                             (bottom_score_y + 5) / 2);
+                                             (bottom_score_y + PADDING) * 3 / 4);
         }
 
         screen_texture.draw(score_of_each_player);
@@ -311,9 +395,19 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
 {
     /** second parameter is which cards to display higher than others (for passing) */
 
-    hand_y_position = window.getSize().y - card_sprites[0][2].getGlobalBounds().height * 3 / 2;
-    width_of_card_space = card_sprites[0][2].getGlobalBounds().width * 21 / 20;
+    hand_sprites.clear();
+
+    hand_y_position = window.getSize().y - card_sprites[0][2].getGlobalBounds().height - PADDING;
+
+    width_of_card_space = card_sprites[0][2].getGlobalBounds().width * 21 / 20;  // without overlapping
+
     hand_x_position = window.getSize().x / 2 - (width_of_card_space * hand.size()) / 2;
+    if (hand_x_position < PADDING)
+    {
+        hand_x_position = PADDING;
+        width_of_card_space = (window.getSize().x - (2 * PADDING) -
+                               card_sprites[0][2].getGlobalBounds().width) / (hand.size() - 1);
+    }
 
     int x_position = hand_x_position;  // each card
 
@@ -324,6 +418,7 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
             draw_card(*itr, x_position, hand_y_position);
         else
             draw_card(*itr, x_position, hand_y_position - card_sprites[0][2].getGlobalBounds().height / 5);
+        hand_sprites.push_back(&(card_sprites[itr->get_suit()][itr->get_value()]));
         x_position += width_of_card_space;
 
         // std::cout << "drawing a card at " << x_position << ' ' << hand_y_position << std::endl;
@@ -334,22 +429,28 @@ void Gui::show_hand(const Deck& hand, const std::unordered_set<int>& indices_of_
 
 void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indices_of_higher_cards)
 {
+    screen_texture.clear(bg_color);
+
+    // show_hand has to be first in this function because other functions depend on variables set by show_hand
+    show_hand(hand, indices_of_higher_cards);
+
     sf::Text tip;
     tip.setFont(font);
     tip.setString("Choose three cards to pass to another player.");
     tip.setCharacterSize(window.getSize().x / 53);
     tip.setColor(text_color);
     tip.setPosition(window.getSize().x -
-                        tip.getGlobalBounds().width - 5,
-                    window.getSize().y -
-                        card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
-                        tip.getGlobalBounds().height);
+                        tip.getGlobalBounds().width -
+                        PADDING,
+                    hand_y_position -
+                        card_sprites[0][2].getGlobalBounds().height / 5 -
+                        tip.getGlobalBounds().height -
+                        PADDING);
 
-    screen_texture.clear(bg_color);
     show_hand_scores();
-    show_hand(hand, indices_of_higher_cards);
     screen_texture.draw(tip);
     draw_direction();
+
     screen_texture.display();
 
     std::cout << indices_of_higher_cards.size() << std::endl;
@@ -363,10 +464,12 @@ void Gui::turn_screen_draw(const std::string& rule)
     rule_text.setCharacterSize(window.getSize().x / 53);
     rule_text.setColor(text_color);
     rule_text.setPosition(window.getSize().x -
-                            rule_text.getGlobalBounds().width - 5,
-                          window.getSize().y -
-                            card_sprites[0][2].getGlobalBounds().height * 9 / 5 -
-                            rule_text.getGlobalBounds().height);
+                            rule_text.getGlobalBounds().width -
+                            PADDING,
+                          hand_y_position -
+                            card_sprites[0][2].getGlobalBounds().height / 5 -
+                            rule_text.getGlobalBounds().height -
+                            PADDING);
 
     screen_texture.clear(bg_color);
     show_hand_scores();
@@ -387,96 +490,6 @@ void Gui::draw_direction()
     arrow_sprite.setRotation((game.get_passing_direction() - 1) * 90);
     arrow_sprite.setPosition(window.getSize().x / 2, window.getSize().y / 2);
     screen_texture.draw(arrow_sprite);
-}
-
-Card Gui::choose_card(const std::vector<Card>& hand_vector) const
-{
-    std::string choice;
-
-    std::getline(std::cin, choice);
-    int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
-    if (size_t(choice_index) >= hand_vector.size() || choice_index < 0)  // invalid choice
-        return Card();  // 0 value
-    else  // valid choice
-        return hand_vector.at(choice_index);
-}
-
-std::vector<Card> Gui::input_passing_choices(const Deck& hand) const
-{
-    std::vector<Card> to_return;
-    Card card_choice;
-
-    std::vector<Card> hand_vector;
-    // copy hand to vector
-    for (auto itr = hand.begin(); itr != hand.end(); ++itr)
-        hand_vector.push_back(*itr);
-
-    std::cout << "pick 3 to pass " << game.get_passing_direction() << " to the left\n";
-    while (to_return.size() < 3)
-    {
-        std::cout << "choice " << to_return.size() + 1 << "? ";
-
-        card_choice = choose_card(hand_vector);
-
-        if (card_choice.get_value() &&  // not 0 value
-            std::find(to_return.begin(), to_return.end(), card_choice) == to_return.end())
-        {
-            to_return.push_back(card_choice);
-        }
-    }
-
-    return to_return;
-}
-
-Card Gui::input_play_choice(const Deck& hand) const
-{
-    Card to_return;
-
-    std::vector<Card> valid_choices;
-    game.hand.find_valid_choices(valid_choices);
-    // this might seem inefficient because find_valid_choices iterates through the hand,
-    // then we iterate through the hand again to match indices with the vector
-    // but find_valid_choices is called a lot more than this UI function
-    // so we don't want find_valid_choices to do any more than it has to
-
-    size_t current_valid_choice = 0;
-    std::vector<int> indices_of_valid_choices;
-
-    // put indices of valid choices in the right spot
-    for (auto itr = hand.begin(); itr != hand.end(); ++itr)
-    {
-        if ((current_valid_choice < valid_choices.size()) &&  // valid choice left to find
-            (*itr == valid_choices[current_valid_choice]))  // found here
-        {
-            indices_of_valid_choices.push_back(current_valid_choice);
-            ++current_valid_choice;
-        }
-        else  // not here, or none left to find
-            indices_of_valid_choices.push_back(-1);  // flag for not valid / illegal play
-    }
-
-    std::cout << "card to play? ";
-    while (! to_return.get_value())  // loop until valid input
-    {
-        std::string choice;
-
-        std::getline(std::cin, choice);
-        int choice_index = strtol(choice.c_str(), nullptr, 10) - 1;
-        if (size_t(choice_index) >= indices_of_valid_choices.size() || choice_index < 0)  // invalid menu option
-            to_return = Card();  // 0 value
-        else  // one of the menu options
-        {
-            if (indices_of_valid_choices[choice_index] == -1)  // illegal play
-            {
-                to_return = Card();  // 0 value
-                std::cout << "That play is not allowed.\n";
-            }
-            else  // legal play
-                to_return = valid_choices[indices_of_valid_choices[choice_index]];
-        }
-    }
-
-    return to_return;
 }
 
 void Gui::ai_pass(int player_passing, std::vector<Card>* cards_to_pass) const
@@ -510,21 +523,24 @@ void Gui::pass()
                         window.close();
                     else if (event.type == sf::Event::MouseButtonReleased)
                     {
-                        // I don't care which button it is
+                        // I don't care which button it is  // TODO: change to only left mouse button?
                         // check vertical position
                         // card click
                         if (event.mouseButton.y >= (hand_y_position - card_sprites[0][2].getGlobalBounds().height / 5) &&
                             event.mouseButton.y < (hand_y_position + card_sprites[0][2].getGlobalBounds().height))
                         {
                             int which_card_index = -1;
-                            int x_position_in_hand = event.mouseButton.x - hand_x_position;
-                            if (x_position_in_hand > 0 &&
-                                x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
+
+                            for (int index = hand_sprites.size() - 1; index >= 0; --index)  // backwards because of overlapping
                             {
-                                which_card_index = x_position_in_hand / width_of_card_space;
-                                if (which_card_index >= (int)game.hand.get_hands()[player_passing].size())
-                                    which_card_index = -1;
+                                if (hand_sprites[index]->getGlobalBounds().contains(event.mouseButton.x,
+                                                                                    event.mouseButton.y))
+                                {
+                                    which_card_index = index;
+                                    break;
+                                }
                             }
+
                             if (which_card_index >= 0)
                             {
                                 // std::cout << "clicked on card " << which_card_index << std::endl;
@@ -555,7 +571,7 @@ void Gui::pass()
                         else if (arrow_sprite.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y) &&
                                  indices_to_pass.size() == 3)
                         {
-                            std::cout << "clicked on arrow\n";
+                            std::cout << "clicked on arrow with 3 choices\n";
                             // pass these cards
                             for (auto itr = indices_to_pass.begin(); itr != indices_to_pass.end(); ++itr)
                             {
@@ -634,7 +650,7 @@ void Gui::computer_turn()
     {
         play_ai_wrapper(&to_play);
     }
-    std::cout << "           player " << game.hand.get_whose_turn() + 1 << " plays " << to_play.str() << std::endl;
+    std::cout << "           player " << game.hand.get_whose_turn() << " plays " << to_play.str() << std::endl;
     game.hand.play_card(to_play);
 }
 
@@ -692,14 +708,17 @@ void Gui::human_turn()
                     event.mouseButton.y < (hand_y_position + card_sprites[0][2].getGlobalBounds().height))
                 {
                     int which_card_index = -1;
-                    int x_position_in_hand = event.mouseButton.x - hand_x_position;
-                    if (x_position_in_hand > 0 &&
-                        x_position_in_hand % width_of_card_space < card_sprites[0][2].getGlobalBounds().width)
+
+                    for (int index = hand_sprites.size() - 1; index >= 0; --index)  // backwards because of overlapping
                     {
-                        which_card_index = x_position_in_hand / width_of_card_space;
-                        if (which_card_index >= (int)game.hand.get_hands()[game.hand.get_whose_turn()].size())
-                            which_card_index = -1;
+                        if (hand_sprites[index]->getGlobalBounds().contains(event.mouseButton.x,
+                                                                            event.mouseButton.y))
+                        {
+                            which_card_index = index;
+                            break;
+                        }
                     }
+
                     if (which_card_index >= 0)
                     {
                         if (indices_of_valid_choices[which_card_index] == -1)  // illegal play

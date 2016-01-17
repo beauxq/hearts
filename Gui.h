@@ -15,6 +15,7 @@ const int Y_DEFAULT_RESOLUTION = 600;
 const std::string WINDOW_NAME("Hearts");
 const sf::Color DEFAULT_BG_COLOR(80, 0, 160);
 const sf::Color DEFAULT_TEXT_COLOR(90,180,0);
+const int PADDING = 5;  // TODO: find all the places where this needs to replace magic numbers
 
 class Gui
 {
@@ -34,6 +35,7 @@ private:
 
     std::vector<std::vector<sf::Texture> > card_textures;  // first index is suit
     std::vector<std::vector<sf::Sprite> > card_sprites;  // second index is value
+    std::vector<sf::Sprite *> hand_sprites;  // pointers to card_sprites
 
     sf::RenderTexture arrow_texture;
     sf::Sprite arrow_sprite;
@@ -41,6 +43,8 @@ private:
     void altload();
     void load();
     void load_images(int* cards_finished);
+    void load_images_alt(int* cards_finished);  // old images, not used currently
+    void make_arrow();
     void load_screen(int* cards_finished);
     void play_ai_wrapper(Card* to_play);
     void pause_wait_for_click(const float& seconds);
@@ -56,12 +60,6 @@ private:
 
     void draw_card(const Card& card, float x, float y);
     void draw_direction();
-
-    /** this function called in other input functions
-        @returns default constructed card for failure */
-    Card choose_card(const std::vector<Card>& hand_vector) const;
-    std::vector<Card> input_passing_choices(const Deck& hand) const;
-    Card input_play_choice(const Deck& hand) const;
 
     void ai_pass(int player_passing, std::vector<Card>* cards_to_pass) const;
 
