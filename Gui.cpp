@@ -481,7 +481,7 @@ Card Gui::input_play_choice(const Deck& hand) const
 
 void Gui::ai_pass(int player_passing, std::vector<Card>* cards_to_pass) const
 {
-    *cards_to_pass = game.hand.get_hands()[player_passing].pick_random(3);
+    *cards_to_pass = game.hand.pass_ai(player_passing, game.get_passing_direction());
 }
 
 void Gui::pass()

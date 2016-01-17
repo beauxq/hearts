@@ -11,8 +11,9 @@
 const int PLAYER_COUNT = 4;
 const Card STARTING_CARD(2, CLUBS);
 
-const int AI_LEVEL = 20000;  // how smart the AI is ( ~ number of simulated tricks)
+const int AI_LEVEL = 100000;  // how smart the AI is ( ~ number of simulated tricks)
 // this number should be tuned so that the time test in Gui::play_ai_wrapper is about .5 on a slow computer
+// (with compiler optimized for speed)
 
 class Game_Hand
 {
@@ -83,10 +84,10 @@ public:
     void find_valid_choice_rule(std::string& rule) const;
 
     // AI
-    Card static_play_ai();
-    Card dynamic_play_ai(const int& passing_direction);
-    Card simulation_play_ai();  // used in simulation (inside dynamic_play_ai), static or more random if it's possible to shoot the moon
-    std::vector<Card> pass_ai(const int& from_player);
+    Card static_play_ai() const;
+    Card dynamic_play_ai(const int& passing_direction) const;
+    Card simulation_play_ai() const;  // used in simulation (inside dynamic_play_ai), static or more random if it's possible to shoot the moon
+    std::vector<Card> pass_ai(const int& from_player, const int& passing_direction) const;
 };
 
 #endif // GAME_HAND_H_INCLUDED

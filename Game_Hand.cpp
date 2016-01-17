@@ -741,7 +741,7 @@ void Game_Hand::find_valid_choice_rule(std::string& rule) const
     }
 }
 
-Card Game_Hand::static_play_ai()
+Card Game_Hand::static_play_ai() const
 {
     /** this will not work with alternative scoring rules involving other cards (jack of diamonds)
         it could crash */
@@ -989,7 +989,7 @@ Card Game_Hand::static_play_ai()
     */
 }
 
-Card Game_Hand::dynamic_play_ai(const int& passing_direction)
+Card Game_Hand::dynamic_play_ai(const int& passing_direction) const
 {
     std::vector<Card> valid_choices;
     find_valid_choices(valid_choices);
@@ -1057,7 +1057,7 @@ Card Game_Hand::dynamic_play_ai(const int& passing_direction)
     return valid_choices[index_of_min];
 }
 
-Card Game_Hand::simulation_play_ai()
+Card Game_Hand::simulation_play_ai() const
 {
     int random_if_less_than;  // play choice will be random if a rand()%10 < this
 
@@ -1078,4 +1078,11 @@ Card Game_Hand::simulation_play_ai()
     {
         return static_play_ai();
     }
+}
+
+std::vector<Card> Game_Hand::pass_ai(const int& from_player, const int& passing_direction) const
+{
+    std::vector<Card> cards_to_pass = hands[from_player].pick_random(3);
+
+    return cards_to_pass;
 }
