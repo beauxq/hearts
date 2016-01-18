@@ -177,7 +177,9 @@ void Gui::load_images_alt(int* cards_finished)
                 y = Y_FACE;
                 break;
             default:
-                ; // wha...  !?
+                // wha...  !?
+                x = 0;
+                y = 0;
             }
             // std::cout << "am i getting here?" << std::endl;  // test line
             if (! card_textures[suit][value].loadFromFile(FILENAMES[suit], sf::IntRect(x, y, X_SIZE, Y_SIZE)))
@@ -353,6 +355,54 @@ void Gui::show_hand_scores()
 
         screen_texture.draw(score_of_each_player);
     }
+}
+
+void Gui::show_passed_cards()
+{
+    screen_texture.clear(bg_color);
+
+    // find indices of passed cards
+    std::unordered_set<int> indices_of_higher_cards;
+    size_t index = 0;
+    for (auto itr = game.hand.get_hands()[0].begin(); itr != game.hand.get_hands()[0].end(); ++itr)
+    {
+        for (auto passed_itr = game.hand.get_passed_cards_to_player(0).begin();
+             passed_itr != game.hand.get_passed_cards_to_player(0).end();
+             ++passed_itr)
+        {
+            if (*itr == *passed_itr)
+            {
+                indices_of_higher_cards.insert(index);
+                break;
+            }
+        }
+
+        ++index;
+    }
+    // assert indices_of_higher_cards.size() == 3
+
+    // show_hand has to be first in this function because other functions depend on variables set by show_hand
+    show_hand(game.hand.get_hands()[0], indices_of_higher_cards);
+
+    sf::Text tip;
+    tip.setFont(font);
+    tip.setString("These cards were passed to you.");
+    tip.setCharacterSize(window.getSize().x / 53);
+    tip.setColor(text_color);
+    tip.setPosition(window.getSize().x -
+                        tip.getGlobalBounds().width -
+                        PADDING,
+                    hand_y_position -
+                        card_sprites[0][2].getGlobalBounds().height / 5 -
+                        tip.getGlobalBounds().height -
+                        PADDING);
+
+    show_hand_scores();
+    screen_texture.draw(tip);
+
+    screen_texture.display();
+
+    pause_wait_for_click(4);
 }
 
 void Gui::show_played_cards()
@@ -626,7 +676,7 @@ void Gui::pass()
         // pick up passed cards
         game.hand.receive_passed_cards();
 
-        // TODO: show the passed cards for 2? seconds?
+        show_passed_cards();
     }
 }
 

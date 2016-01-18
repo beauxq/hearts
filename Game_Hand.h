@@ -65,6 +65,7 @@ public:
     const int& get_pass_count() const { return pass_count; }
     const std::vector<Card>& get_played_cards();  // first put null cards where cards haven't been played
     const bool& possible_to_shoot_moon() const { return shoot_moon_possible; }
+    const std::vector<Card>& get_passed_cards_to_player(const size_t& player) const { return passed_cards_to_player[player]; }
 
     // setter
     void set_pass_count() { pass_count = PLAYER_COUNT; }  // to be called on the keeper hand to say we've already passed
