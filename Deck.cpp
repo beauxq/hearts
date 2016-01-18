@@ -75,7 +75,15 @@ void Deck::erase(const Card& card_to_remove)
     if (cards[card_to_remove.get_suit()].erase(card_to_remove))  // TODO: does this remove the right card (after order change)?
     {
         --card_count;
+        //test
+        /*
+        if (card_count < 13)
+            std::cout << "successfully erased: " << card_to_remove.str() << std::endl; */
     }
+    // test
+    /*
+    else
+        std::cout << "tried to erase a card not there: " << card_to_remove.str() << std::endl; */
 }
 
 Card Deck::deal_one()
@@ -107,10 +115,9 @@ std::vector<Card> Deck::pick_random(int n) const
         // std::cout << "enter loop needing " << n << " picks\n";
         deck_itr = begin();
         choice = rand() % (card_count - to_return.size());
-        while (choice > 0)
+
+        while (true)  // exit condition in the middle, top is (choice >= 0), bottom is (choice > 0)
         {
-            // std::cout << "need to advance deck_itr " << choice << std::endl;
-            ++deck_itr;
             bool this_might_be_in_vector = true;
             while (this_might_be_in_vector)
             {
@@ -118,13 +125,21 @@ std::vector<Card> Deck::pick_random(int n) const
                 std::vector<Card>::iterator to_ret_itr = std::find(to_return.begin(), to_return.end(), *deck_itr);
                 if (to_ret_itr == to_return.end())  // got through the vector without finding it
                     this_might_be_in_vector = false;
-                else
+                else  // *deck_itr is already in vector to_return
                     ++deck_itr;
             }
+
+            if (choice == 0)
+                break;
+
+            // std::cout << "need to advance deck_itr " << choice << std::endl;
+            ++deck_itr;
             --choice;
         }
 
         to_return.push_back(*deck_itr);
+        // test
+        // std::cout << deck_itr->str() << " added to random 3\n";
     }
 
     return to_return;

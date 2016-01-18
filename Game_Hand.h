@@ -51,7 +51,7 @@ private:
     /** replace hands with player's guess about what the other players' hands are
         (so the computer doesn't cheat)
         to be called in a simulation */
-    void speculate_hands(const int& passing_direction);
+    void speculate_hands(const int& player_speculating, const int& passing_direction);
 public:
     Game_Hand();
 

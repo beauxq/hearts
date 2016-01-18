@@ -494,6 +494,7 @@ void Gui::draw_direction()
 
 void Gui::ai_pass(int player_passing, std::vector<Card>* cards_to_pass) const
 {
+    std::cout << "thread has started for player " << player_passing << std::endl;
     *cards_to_pass = game.hand.pass_ai(player_passing, game.get_passing_direction());
 }
 
@@ -507,6 +508,7 @@ void Gui::pass()
         if (! game.hand.is_human(player_passing))  // not human
         {
             threads.push_back(std::thread(&Gui::ai_pass, this, player_passing, &(cards_to_pass[player_passing])));
+            //ai_pass(player_passing, &(cards_to_pass[player_passing]));
         }
         else  // human
         {

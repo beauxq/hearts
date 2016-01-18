@@ -19,7 +19,7 @@ int Game_Hand::points_for(const Card& card) const
     return 0;
 }
 
-void Game_Hand::speculate_hands(const int& passing_direction)
+void Game_Hand::speculate_hands(const int& player_speculating, const int& passing_direction)
 {
     /** replace hands with player's guess about the other players' hands
         (so the computer doesn't cheat)
@@ -38,10 +38,11 @@ void Game_Hand::speculate_hands(const int& passing_direction)
     }
 
     // I know my own hand
-    space_remaining_in[whose_turn] = 0;
+    space_remaining_in[player_speculating] = 0;
 
     // cards I passed to someone
-    const int WHOM_I_PASSED_TO = (whose_turn + passing_direction) % PLAYER_COUNT;
+    // (this section should do nothing ( space remaining -= 0 ) when called for passing ai)
+    const int WHOM_I_PASSED_TO = (player_speculating + passing_direction) % PLAYER_COUNT;
     space_remaining_in[WHOM_I_PASSED_TO] -= passed_cards_to_player[WHOM_I_PASSED_TO].size();
 
     // prepare to distribute unknown cards
@@ -52,14 +53,14 @@ void Game_Hand::speculate_hands(const int& passing_direction)
             non_full_hands.insert(player);
     }
 
-    // which hands can hold which suits (exclude whose_turn, hand that is not speculated)
+    // which hands can hold which suits (exclude player_speculating, hand that is not speculated)
     for (int suit = 0; suit < SUIT_COUNT; ++suit)
     {
         for (int player = 0; player < PLAYER_COUNT; ++player)
         {
             if (player_seen_void_in_suits[player].count(suit) == 0)
             {
-                if (player != whose_turn)  // (exclude whose_turn, hand that is not speculated)
+                if (player != player_speculating)  // (exclude player_speculating, hand that is not speculated)
                 {
                     hands_that_allow_suit[suit].insert(player);
                 }
@@ -67,7 +68,7 @@ void Game_Hand::speculate_hands(const int& passing_direction)
             /*
             else  // player is void in suit TODO: this else is just for testing, remove
             {
-                if (player != whose_turn)  // (exclude whose_turn, hand that is not speculated)
+                if (player != player_speculating)  // (exclude player_speculating, hand that is not speculated)
                 {
                     std::cout << "    player " << player << " has no ";
                     switch (suit)
@@ -89,6 +90,7 @@ void Game_Hand::speculate_hands(const int& passing_direction)
             */
         }  // players
     }  // suits
+
     // distribute unknown cards
     /*
     Algorithm for distributing unknown cards
@@ -115,8 +117,8 @@ void Game_Hand::speculate_hands(const int& passing_direction)
                 Put "this card" in a hand that allows it.
     Next card.
     */
-    for (auto this_card_itr = unknown_cards_for_player[whose_turn].begin();
-         this_card_itr != unknown_cards_for_player[whose_turn].end();
+    for (auto this_card_itr = unknown_cards_for_player[player_speculating].begin();
+         this_card_itr != unknown_cards_for_player[player_speculating].end();
          ++this_card_itr)
     {
         // intersection of non_full and allow suit
@@ -213,7 +215,7 @@ void Game_Hand::speculate_hands(const int& passing_direction)
                 // which hand is third hand?
                 int third_hand = 0;
                 while ((third_hand == full_and_allows_this_card) ||  // first hand
-                       (third_hand == whose_turn) ||  // the hand we're not speculating
+                       (third_hand == player_speculating) ||  // the hand we're not speculating
                        (third_hand == non_full_hand))  // second hand
                 {
                     ++third_hand;
@@ -283,7 +285,7 @@ void Game_Hand::speculate_hands(const int& passing_direction)
     }  // next card
 
     // put in the cards that I already knew
-    speculated_hands[whose_turn] = hands[whose_turn];
+    speculated_hands[player_speculating] = hands[player_speculating];
     for (auto itr = passed_cards_to_player[WHOM_I_PASSED_TO].begin();
          itr != passed_cards_to_player[WHOM_I_PASSED_TO].end();
          ++itr)
@@ -363,11 +365,16 @@ void Game_Hand::deal_hands()
 
 void Game_Hand::pass(const int& from_player, const int& to_player, const std::vector<Card>& passed_cards)
 {
+    //std::cout << "in pass function vector size " << passed_cards.size() << std::endl;
+    //std::cout << "passed_cards_to_player[to_player].size() " << passed_cards_to_player[to_player].size() << std::endl;
+    //std::cout << "hands[from_player].size() after passing in pass function " << hands[from_player].size() << std::endl;
     for (auto itr = passed_cards.begin(); itr != passed_cards.end(); ++itr)
     {
         passed_cards_to_player[to_player].push_back(*itr);
         hands[from_player].erase(*itr);
     }
+    //std::cout << "passed_cards_to_player[to_player].size() " << passed_cards_to_player[to_player].size() << std::endl;
+    //std::cout << "hands[from_player].size() after passing in pass function " << hands[from_player].size() << std::endl;
     ++pass_count;
 }
 
@@ -1018,7 +1025,7 @@ Card Game_Hand::dynamic_play_ai(const int& passing_direction) const
             // std::cout << "player_is_human[0] " << player_is_human[0] << std::endl;
             // std::cout << "simulation.player_is_human[0] " << simulation.player_is_human[0] << std::endl;
 
-            simulation.speculate_hands(passing_direction);
+            simulation.speculate_hands(whose_turn, passing_direction);
 
             // play the card we're checking now
             simulation.play_card(valid_choices[choice_index]);  // changes simulation.whose_turn to someone else
@@ -1085,7 +1092,157 @@ Card Game_Hand::simulation_play_ai() const
 
 std::vector<Card> Game_Hand::pass_ai(const int& from_player, const int& passing_direction) const
 {
-    std::vector<Card> cards_to_pass = hands[from_player].pick_random(3);
+    const size_t THIRTEEN_CHOOSE_THREE = 286;
+
+    std::vector<Card> cards_to_pass;  // = hands[from_player].pick_random(3);
+
+    std::vector< std::pair< std::vector<size_t>, int > > sim_scores(THIRTEEN_CHOOSE_THREE);
+    // sim_scores[index 0-285].first[index 0-2]  = indices of choices
+    //                        .second            = score
+
+    // copy hand to vector of cards for faster random access
+    // (Deck random access is slow)
+    std::vector<Card> hand;
+    for (auto itr = hands[from_player].begin(); itr != hands[from_player].end(); ++itr)
+        hand.push_back(*itr);
+
+    size_t sim_scores_index = 0;
+    size_t y, z;
+
+    for (size_t x = 0; x < 11; ++x)
+    {
+        for (y = x + 1; y < 12; ++y)
+        {
+            for (z = y + 1; z < 13; ++z)
+            {
+                std::vector<Card> cards_passed_for_these_simulations;
+                cards_passed_for_these_simulations.push_back(hand[x]);
+                cards_passed_for_these_simulations.push_back(hand[y]);
+                cards_passed_for_these_simulations.push_back(hand[z]);
+
+                std::vector<size_t> hand_indices = {x, y, z};
+                sim_scores[sim_scores_index] = std::pair< std::vector<size_t>, int > (hand_indices, 0);
+
+                for (int sim_count = AI_LEVEL / 1000; sim_count > 0; --sim_count)
+                {
+                    Game_Hand simulation = *this;
+
+                    simulation.this_is_simulation = true;
+                    simulation.player_is_human[0] = false;
+
+                    // test
+                    /*
+                    std::cout << "from_player " << from_player << " before speculate\n";
+                    std::cout << simulation.hands[0].size() << ' '
+                              << simulation.hands[1].size() << ' '
+                              << simulation.hands[2].size() << ' '
+                              << simulation.hands[3].size() << std::endl; */
+
+                    simulation.speculate_hands(from_player, passing_direction);
+
+                    // test
+                    /*
+                    std::cout << "from_player " << from_player << " after speculate\n";
+                    std::cout << simulation.hands[0].size() << ' '
+                              << simulation.hands[1].size() << ' '
+                              << simulation.hands[2].size() << ' '
+                              << simulation.hands[3].size() << std::endl; */
+
+
+                    // passing
+                    for (int player_to_pass = 0; player_to_pass < PLAYER_COUNT; ++player_to_pass)
+                    {
+                        if (player_to_pass == from_player)
+                        {
+                            simulation.pass(from_player,
+                                            (from_player + passing_direction) % PLAYER_COUNT,
+                                            cards_passed_for_these_simulations);
+                        }
+                        else  // not the player who's simulating
+                        {
+                            std::vector<Card> this_player_pass = simulation.hands[player_to_pass].pick_random(3);
+                            //std::cout << "random player " << player_to_pass << " vector size " << this_player_pass.size() << std::endl;
+                            simulation.pass(player_to_pass,
+                                            (player_to_pass + passing_direction) % PLAYER_COUNT,
+                                            this_player_pass);
+                        }
+                    }
+
+                    // test
+                    /*
+                    std::cout << "from_player " << from_player << " after passing\n";
+                    std::cout << simulation.hands[0].size() << ' '
+                              << simulation.hands[1].size() << ' '
+                              << simulation.hands[2].size() << ' '
+                              << simulation.hands[3].size() << std::endl; */
+
+
+                    simulation.receive_passed_cards();
+
+                    // test
+                    /*
+                    std::cout << "from_player " << from_player << " after receiving\n";
+                    std::cout << simulation.hands[0].size() << ' '
+                              << simulation.hands[1].size() << ' '
+                              << simulation.hands[2].size() << ' '
+                              << simulation.hands[3].size() << std::endl; */
+
+
+                    // playing
+                    for (int tricks = 13; tricks > 0; --tricks)
+                    {
+                        simulation.reset_trick();
+                        while (simulation.turns_left_in_trick())
+                        {
+                            simulation.play_card(simulation.simulation_play_ai());
+                        }
+                        simulation.end_trick();
+                    }
+                    simulation.end_hand();
+                    // done playing
+
+                    sim_scores[sim_scores_index].second += simulation.scores[from_player];
+                }
+
+                // for testing AI
+                /*
+                std::cout << "score " << (float)sim_scores[sim_scores_index].second / (AI_LEVEL / 1000) << "  "
+                          << hand[x].str()
+                          << hand[y].str()
+                          << hand[z].str() << std::endl;
+                */
+
+                ++sim_scores_index;
+            }
+        }
+    }
+
+    // std::cout << sim_scores_index << std::endl;
+
+    // min of scores
+    size_t best_pass_index = 0;
+
+    for (sim_scores_index = 1; sim_scores_index < THIRTEEN_CHOOSE_THREE; ++sim_scores_index)
+    {
+        if (sim_scores[sim_scores_index].second < sim_scores[best_pass_index].second)
+            best_pass_index = sim_scores_index;
+    }
+
+    // found best pass
+    cards_to_pass.push_back(hand[sim_scores[best_pass_index].first[0]]);
+    cards_to_pass.push_back(hand[sim_scores[best_pass_index].first[1]]);
+    cards_to_pass.push_back(hand[sim_scores[best_pass_index].first[2]]);
+
+    // for AI testing
+    std::cout << "player " << from_player << " had:\n";
+    for (auto hand_itr = hand.begin(); hand_itr != hand.end(); ++hand_itr)
+    {
+        std::cout << hand_itr->str() << std::endl;
+    }
+    std::cout << "and chose to pass:\n";
+    std::cout << cards_to_pass[0].str() << ' ';
+    std::cout << cards_to_pass[1].str() << ' ';
+    std::cout << cards_to_pass[2].str() << std::endl << std::endl;
 
     return cards_to_pass;
 }
