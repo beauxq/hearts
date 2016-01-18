@@ -11,6 +11,7 @@
 int Game_Hand::points_for(const Card& card) const
 {
     // TODO: magic numbers, scoring options
+    // note: this came out as one of the top functions in a code profiling, so don't make it too complex
     if (card.get_suit() == HEARTS)
         return 1;
     if (card.get_value() == 12 && card.get_suit() == SPADES)
@@ -433,6 +434,8 @@ void Game_Hand::play_card(const Card& card)
         trick_leader = whose_turn;
 
     // see if it's still possible to shoot the moon
+    // TODO: can this be more efficient? this function is high in the profiler
+    // maybe only check each trick if it's still possible to shoot the moon?
     if (shoot_moon_possible)
     {
         // find out if still possible
