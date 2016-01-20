@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <unordered_set>
+#include <string>
 
 #include "Card.h"
 #include "Deck.h"
@@ -15,6 +16,8 @@ const int Y_DEFAULT_RESOLUTION = 600;
 const std::string WINDOW_NAME("Hearts");
 const sf::Color DEFAULT_BG_COLOR(80, 0, 160);
 const sf::Color DEFAULT_TEXT_COLOR(90,180,0);
+const sf::Color DEFAULT_BUTTON_COLOR(255, 127, 0);
+const std::vector<std::string> DEFAULT_PLAYER_NAMES = {"You", "left", "North", "3 o'clock"};
 const int PADDING = 5;  // TODO: find all the places where this needs to replace magic numbers
 
 class Gui
@@ -26,6 +29,9 @@ private:
     sf::Font font;
     sf::Color bg_color;
     sf::Color text_color;
+    sf::Color button_color;
+
+    std::vector<std::string> player_names;
 
     int hand_y_position;
     int width_of_card_space;
@@ -66,9 +72,11 @@ private:
 
 public:
     Gui(const int& x_resolution = X_DEFAULT_RESOLUTION, const int& y_resolution = Y_DEFAULT_RESOLUTION) :
-        window(sf::VideoMode(x_resolution, y_resolution), WINDOW_NAME, sf::Style::Close),  // no resize allowed
+        window(sf::VideoMode(x_resolution, y_resolution), WINDOW_NAME, sf::Style::Close),  // no resize allowed // TODO: figure out resizing
         bg_color(DEFAULT_BG_COLOR),
         text_color(DEFAULT_TEXT_COLOR),
+        button_color(DEFAULT_BUTTON_COLOR),
+        player_names(DEFAULT_PLAYER_NAMES),
         card_textures(SUIT_COUNT, std::vector<sf::Texture>(Deck::HIGH + 1)),
         card_sprites(SUIT_COUNT, std::vector<sf::Sprite>(Deck::HIGH + 1))
     {
@@ -84,6 +92,8 @@ public:
     void computer_turn();
 
     void human_turn();
+
+    void win_screen();
 
     void play();
 

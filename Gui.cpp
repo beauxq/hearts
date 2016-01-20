@@ -206,7 +206,7 @@ void Gui::make_arrow()
     arrow_texture.create(arrow_size, arrow_size);
 
     sf::RectangleShape rectangle(sf::Vector2f(arrow_size / 2, arrow_size / 2));
-    rectangle.setFillColor(sf::Color(255, 127, 0));
+    rectangle.setFillColor(button_color);
     rectangle.setPosition(arrow_size / 2, arrow_size / 4);
 
     sf::ConvexShape triangle;
@@ -214,7 +214,7 @@ void Gui::make_arrow()
     triangle.setPoint(0, sf::Vector2f(arrow_size / 2, 0));
     triangle.setPoint(1, sf::Vector2f(0, arrow_size / 2));
     triangle.setPoint(2, sf::Vector2f(arrow_size / 2, arrow_size));
-    triangle.setFillColor(sf::Color(255, 127, 0));
+    triangle.setFillColor(button_color);
 
     arrow_texture.clear(bg_color);
 
@@ -234,6 +234,7 @@ void Gui::load_screen(int* cards_finished)
     loading_message.setFont(font);
     loading_message.setString("loading images...");
     loading_message.setCharacterSize(48);
+    loading_message.setOrigin(loading_message.getLocalBounds().left, loading_message.getLocalBounds().top);  // needed only because the origin of text is weird
     loading_message.setColor(text_color);
     loading_message.setPosition((window.getSize().x - loading_message.getLocalBounds().width) / 4,
                                 window.getSize().y / 4);
@@ -321,6 +322,7 @@ void Gui::show_hand_scores()
     sf::Text score_of_each_player;
     score_of_each_player.setFont(font);
     score_of_each_player.setCharacterSize(window.getSize().y / 25);
+    score_of_each_player.setOrigin(score_of_each_player.getLocalBounds().left, score_of_each_player.getLocalBounds().top);  // needed only because the origin of text is weird
     score_of_each_player.setColor(text_color);  // TODO: text color magic numbers
 
     for (int i = 0; i < PLAYER_COUNT; ++i)
@@ -388,6 +390,7 @@ void Gui::show_passed_cards()
     tip.setFont(font);
     tip.setString("These cards were passed to you.");
     tip.setCharacterSize(window.getSize().x / 53);
+    tip.setOrigin(tip.getLocalBounds().left, tip.getLocalBounds().top);  // needed only because the origin of text is weird
     tip.setColor(text_color);
     tip.setPosition(window.getSize().x -
                         tip.getGlobalBounds().width -
@@ -488,6 +491,7 @@ void Gui::pass_screen_draw(const Deck& hand, const std::unordered_set<int>& indi
     tip.setFont(font);
     tip.setString("Choose three cards to pass to another player.");
     tip.setCharacterSize(window.getSize().x / 53);
+    tip.setOrigin(tip.getLocalBounds().left, tip.getLocalBounds().top);  // needed only because the origin of text is weird
     tip.setColor(text_color);
     tip.setPosition(window.getSize().x -
                         tip.getGlobalBounds().width -
@@ -512,6 +516,7 @@ void Gui::turn_screen_draw(const std::string& rule)
     rule_text.setFont(font);
     rule_text.setString(rule);
     rule_text.setCharacterSize(window.getSize().x / 53);
+    rule_text.setOrigin(rule_text.getLocalBounds().left, rule_text.getLocalBounds().top);  // needed only because the origin of text is weird
     rule_text.setColor(text_color);
     rule_text.setPosition(window.getSize().x -
                             rule_text.getGlobalBounds().width -
@@ -708,11 +713,6 @@ void Gui::computer_turn()
 
 void Gui::human_turn()
 {
-
-    //while (window_processes());
-
-
-    // copy paste from input play choice text ui
     Card to_play;
 
     std::vector<Card> valid_choices;
@@ -799,6 +799,98 @@ void Gui::human_turn()
         game.hand.play_card(to_play);
 }
 
+void Gui::win_screen()
+{
+    screen_texture.clear(bg_color);
+
+    // show_hand has to be first in this function because other functions depend on variables set by show_hand
+    show_hand(game.hand.get_hands()[0]);  // just so we have the variables set that need to be set
+
+    // win message
+    std::string win_message;
+    sf::Text win_text;
+    win_text.setFont(font);
+    if (game.get_winners().size() > 1)
+        win_message = "winners:";
+    else  // only 1 winner
+        win_message = "winner:";
+    for (auto itr = game.get_winners().begin(); itr != game.get_winners().end(); ++itr)
+    {
+        win_message += '\n' + player_names[*itr];
+    }
+    win_text.setString(win_message);
+    win_text.setCharacterSize(window.getSize().y / 18);
+    win_text.setOrigin(win_text.getLocalBounds().left, win_text.getLocalBounds().top);  // needed only because the origin of text is weird
+    win_text.setColor(text_color);
+    win_text.setPosition((window.getSize().x - win_text.getGlobalBounds().width) / 2,
+                    window.getSize().y / 7);
+
+    // buttons
+    sf::Text quit_text;
+    sf::Text again_text;
+    quit_text.setFont(font);
+    again_text.setFont(font);
+    quit_text.setString("quit");
+    again_text.setString("play again");
+    quit_text.setCharacterSize(window.getSize().y / 25);
+    again_text.setCharacterSize(window.getSize().y / 25);
+    quit_text.setOrigin(quit_text.getLocalBounds().left, quit_text.getLocalBounds().top);  // needed only because the origin of text is weird
+    again_text.setOrigin(again_text.getLocalBounds().left, again_text.getLocalBounds().top);  // needed only because the origin of text is weird
+    quit_text.setColor(text_color);
+    again_text.setColor(text_color);
+    sf::RectangleShape quit_button;
+    sf::RectangleShape again_button;
+    quit_button.setSize(sf::Vector2f(again_text.getGlobalBounds().width + 2 * PADDING,
+                                     again_text.getGlobalBounds().height + 2 * PADDING));  // same size button for both
+    again_button.setSize(sf::Vector2f(again_text.getGlobalBounds().width + 2 * PADDING,
+                                      again_text.getGlobalBounds().height + 2 * PADDING));
+    quit_button.setFillColor(button_color);
+    again_button.setFillColor(button_color);
+    quit_button.setPosition(window.getSize().x / 2 - PADDING - quit_button.getGlobalBounds().width,
+                            win_text.getGlobalBounds().top + win_text.getGlobalBounds().height + PADDING);
+    again_button.setPosition(window.getSize().x / 2 + PADDING,
+                             win_text.getGlobalBounds().top + win_text.getGlobalBounds().height + PADDING);
+    quit_text.setPosition(quit_button.getGlobalBounds().left + (quit_button.getGlobalBounds().width - quit_text.getGlobalBounds().width) / 2 + PADDING,
+                          win_text.getGlobalBounds().top + win_text.getGlobalBounds().height + 2 * PADDING);
+    again_text.setPosition(window.getSize().x / 2 + 2 * PADDING,
+                           win_text.getGlobalBounds().top + win_text.getGlobalBounds().height + 2 * PADDING);
+
+    screen_texture.draw(quit_button);
+    screen_texture.draw(again_button);
+    screen_texture.draw(quit_text);
+    screen_texture.draw(again_text);
+
+    show_hand_scores();
+    screen_texture.draw(win_text);
+
+    screen_texture.display();
+
+    bool user_clicked_again = false;
+
+    while (window.isOpen() && (! user_clicked_again))
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            else if (event.type == sf::Event::MouseButtonReleased)
+            {
+                if (quit_button.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y))
+                    window.close();
+                else if (again_button.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y))
+                    user_clicked_again = true;
+            }
+            // else if other events (not mouse button release or close)
+        }
+
+        window.clear();
+        screen_sprite.setTexture(screen_texture.getTexture());
+        window.draw(screen_sprite);
+        window.display();
+    }
+}
+
 void Gui::play()
 {
     load();  // load images into memory
@@ -883,6 +975,8 @@ void Gui::play()
                     {
                         // show winner (don't wait for click before resetting game, so that if window closes, it is reset)
                         std::cout << "winner: " << game.get_winners()[0] << std::endl;  // TODO: show winning screen
+                        win_screen();
+
                         game.game_reset();
                         game.hand.reset_hand();
                         game.hand.deal_hands();

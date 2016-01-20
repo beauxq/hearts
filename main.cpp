@@ -23,6 +23,12 @@ void except_test()
     }
 }
 
+void test_winscreen()
+{
+    Gui gui;
+    gui.win_screen();
+}
+
 void test_gui()
 {
     Gui gui;
