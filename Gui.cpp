@@ -973,14 +973,13 @@ void Gui::play()
                     }
                     else  // there's a winner, game over
                     {
-                        // show winner (don't wait for click before resetting game, so that if window closes, it is reset)
-                        std::cout << "winner: " << game.get_winners()[0] << std::endl;  // TODO: show winning screen
+                        // show winner
+                        std::cout << "winner: " << game.get_winners()[0] << std::endl;  // TODO: remove cout test
                         win_screen();
 
                         game.game_reset();
                         game.hand.reset_hand();
                         game.hand.deal_hands();
-                        // TODO: wait for click after resetting game
                     }
                 }
             }  // section that is only done if window is still open
@@ -993,4 +992,5 @@ void Gui::play()
     // human needs to play a card: save game
     // there are points in the game score and passing is not done: save game
     // there are no points in the game score and passing is not done: don't save game
+    // nah, save it no matter what
 }

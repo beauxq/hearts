@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>  // just for debugging  TODO: remove include
 #include <algorithm>  // std::find
+#include <mutex>  // only for test (writing to std::cout in thread)
 
 #include "Card.h"
 #include "Deck.h"
@@ -1234,6 +1235,8 @@ std::vector<Card> Game_Hand::pass_ai(const int& from_player, const int& passing_
     cards_to_pass.push_back(hand[sim_scores[best_pass_index].first[2]]);
 
     // for AI testing
+    static std::mutex mtx;
+    mtx.lock();
     std::cout << "player " << from_player << " had:\n";
     for (auto hand_itr = hand.begin(); hand_itr != hand.end(); ++hand_itr)
     {
@@ -1243,6 +1246,7 @@ std::vector<Card> Game_Hand::pass_ai(const int& from_player, const int& passing_
     std::cout << cards_to_pass[0].str() << ' ';
     std::cout << cards_to_pass[1].str() << ' ';
     std::cout << cards_to_pass[2].str() << std::endl << std::endl;
+    mtx.unlock();
 
     return cards_to_pass;
 }
