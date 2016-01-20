@@ -10,6 +10,7 @@ const int Deck::LOW = 2;
 const int Deck::HIGH = 14;
 
 const int Deck::VALUE_COUNT = HIGH + 1 - LOW;
+const int Deck::LAST_SUIT = SUIT_COUNT - 1;
 
 Deck::iterator Deck::begin() const
 {
@@ -23,8 +24,6 @@ Deck::iterator Deck::begin() const
 
 Deck::iterator Deck::end() const
 {
-    static const int LAST_SUIT = 3;
-
     iterator itr_to_return(this);
     itr_to_return.current_set = LAST_SUIT;
     itr_to_return.inside_iterator = cards[sort_order[itr_to_return.current_set]].end();

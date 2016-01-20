@@ -6,7 +6,7 @@ void Deck::iterator::check_between_sets()
 {
     // std::cout << "entering check between sets, current set: " << current_set
     //           << " is end? " << (inside_iterator == (parent->cards)[(parent->sort_order)[current_set]].end()) << std::endl;
-    while ((current_set < (SUIT_COUNT)) &&
+    while ((current_set != (LAST_SUIT)) &&
            (inside_iterator == (parent->cards)[(parent->sort_order)[current_set]].end()))
     {
         ++current_set;

@@ -52,6 +52,7 @@ public:
     static const int HIGH;  // 14
 
     static const int VALUE_COUNT;  // 13 (avoid magic numbers and avoid extra arithmetic)
+    static const int LAST_SUIT;  // 3 (avoid magic numbers and avoid extra arithmetic)
 
     Deck(const bool& create_full = false);
 
