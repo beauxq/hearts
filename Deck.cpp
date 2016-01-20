@@ -23,8 +23,10 @@ Deck::iterator Deck::begin() const
 
 Deck::iterator Deck::end() const
 {
+    static const int LAST_SUIT = 3;
+
     iterator itr_to_return(this);
-    itr_to_return.current_set = SUIT_COUNT - 1;
+    itr_to_return.current_set = LAST_SUIT;
     itr_to_return.inside_iterator = cards[sort_order[itr_to_return.current_set]].end();
 
     return itr_to_return;
