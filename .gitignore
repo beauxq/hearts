@@ -203,5 +203,8 @@ FakesAssemblies/
 # backup files
 *.bak
 
-#profiler
+# profiler
 *.out
+
+# MonoDevelop
+*.cproj
