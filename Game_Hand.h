@@ -11,7 +11,7 @@
 const int PLAYER_COUNT = 4;
 const Card STARTING_CARD(2, CLUBS);
 
-const int AI_LEVEL = 100000;  // how smart the AI is ( ~ number of simulated tricks)
+const int AI_LEVEL = 50000;  // how smart the AI is ( ~ number of simulated tricks)
 // this number should be tuned so that the time test in Gui::play_ai_wrapper is about .5 on a slow computer
 // (with compiler optimized for speed)
 
