@@ -208,3 +208,9 @@ FakesAssemblies/
 
 # MonoDevelop
 *.cproj
+
+# NetBeans
+dist/
+nbproject/
+.dep.inc
+Makefile
