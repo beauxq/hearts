@@ -281,9 +281,9 @@ void Gui::play_ai_wrapper(Card* to_play)
     std::cout << "  time to decide: " << time.asSeconds() << std::endl;
 }
 
-void Gui::pause_wait_for_click(const float& seconds)
+void Gui::pause_wait_for_click(const float& seconds, const bool& allow_click_to_skip)
 {
-    // show screen for 1 second or until user clicks
+    // show screen for 1 second, or until user clicks if allow_click_to_skip
     sf::Clock clock;
     bool user_clicked = false;
 
@@ -294,7 +294,7 @@ void Gui::pause_wait_for_click(const float& seconds)
         {
             if (event.type == sf::Event::Closed)
                 window.close();
-            else if (event.type == sf::Event::MouseButtonReleased)
+            else if (event.type == sf::Event::MouseButtonReleased && allow_click_to_skip)
                 user_clicked = true;
             // else if other events (not mouse button release or close)
         }
@@ -945,7 +945,7 @@ void Gui::play()
                 }
                 // end trick
                 turn_screen_draw();
-                pause_wait_for_click(1);
+                pause_wait_for_click(1, false);
 
                 game.hand.end_trick();
                 show_hand_scores();

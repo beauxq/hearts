@@ -53,7 +53,7 @@ private:
     void make_arrow();
     void load_screen(int* cards_finished);
     void play_ai_wrapper(Card* to_play);
-    void pause_wait_for_click(const float& seconds);
+    void pause_wait_for_click(const float& seconds, const bool& allow_click_to_skip = true);
 
     Game game;
 
