@@ -656,6 +656,9 @@ void Game_Hand::find_valid_choices(std::vector<Card>& valid_choices) const
                     // without iterating over the entire hand
                     // it may be useful to have the vector in the same order as iterating over the entire hand
                     // so this may need to change to iterate over the entire hand (since the order of suits can change)
+
+                    // TODO: yes, this will cause a problem if the order of suits is changed
+                    // valid_choices needs to be in the same order as iterating through the hand
                 }
             }
         }
@@ -697,7 +700,7 @@ void Game_Hand::find_valid_choice_rule(std::string& rule) const
     {
         if (played_card_count == 0)  // first player
         {
-            rule = "The two of clubs must be played first.";  // two of clubs
+            rule = "The " + STARTING_CARD.str() + " must be played first.";  // two of clubs
             return;  // nothing else
         }
         // not first player

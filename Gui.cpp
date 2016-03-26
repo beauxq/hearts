@@ -727,6 +727,9 @@ void Gui::human_turn()
     size_t current_valid_choice = 0;
     std::vector<int> indices_of_valid_choices;
 
+    // TODO: find_valid_choices needs to be changed to make sure the vector returned
+    // is in the same order as iterating through the hand
+
     // put indices of valid choices in the right spot
     for (auto itr = game.hand.get_hands()[game.hand.get_whose_turn()].begin();
          itr != game.hand.get_hands()[game.hand.get_whose_turn()].end();
