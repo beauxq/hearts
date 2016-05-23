@@ -4,6 +4,7 @@
 #include <iostream>  // for test
 #include <cstdlib>
 #include <algorithm>  // find
+#include <vector>
 
 // whether ace is high is defined here (1-13 or 2-14)
 const int Deck::LOW = 2;
