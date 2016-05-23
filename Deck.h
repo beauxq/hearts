@@ -61,6 +61,7 @@ public:
     void change_sort(const std::vector<Suit>& suits_in_order);
 
     void erase(const Card& card_to_remove);
+    // TODO: overload erase to take an iterator, and use it wherever we have one
 
     /** random */
     Card deal_one();
