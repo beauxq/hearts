@@ -214,3 +214,9 @@ dist/
 nbproject/
 .dep.inc
 Makefile
+
+# Clion
+.idea
+
+# cmake
+cmake-build-debug
