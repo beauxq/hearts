@@ -81,6 +81,10 @@ public:
     int end_hand();  // returns who shot the moon, -1 if no one shot the moon
 
     // rules
+    /**
+     * sets the valid_choices parameter to a list of Cards that the current player is allowed to play
+     * the list must be in the same order as iterating through the player's hand
+     */
     void find_valid_choices(std::vector<Card>& valid_choices) const;
     void find_valid_choice_rule(std::string& rule) const;
 
