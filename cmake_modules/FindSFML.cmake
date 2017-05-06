@@ -71,7 +71,8 @@ set(FIND_SFML_PATHS
     /sw
     /opt/local
     /opt/csw
-    /opt)
+    /opt
+    "F:/SFML-2.4.2 for GCC 6.1.0 MinGW (SEH) - 64-bit")
 
 # find the SFML include directory
 find_path(SFML_INCLUDE_DIR SFML/Config.hpp
